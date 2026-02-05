@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Organizer {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  passwordHash String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  elections    Election[]
+}
+
+model Election {
+  id                  String            @id @default(cuid())
+  organizerId         String
+  organizer           Organizer         @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  title               String
+  description         String            @default("")
+  shareCode           String            @unique @default(cuid())
+  status              String            @default("draft")
+  registrationStart   DateTime?
+  registrationEnd     DateTime?
+  votingStart         DateTime?
+  votingEnd           DateTime?
+  securityLevel       String            @default("standard")
+  allowVoteUpdate     Boolean           @default(false)
+  showLiveResults     Boolean           @default(false)
+  resultsVisibility   String            @default("organizer")
+  requireLocation     Boolean           @default(false)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  regions             Region[]
+  positions           Position[]
+  customFields        CustomField[]
+  voters              Voter[]
+  votes               Vote[]
+}
+
+model Region {
+  id           String   @id @default(cuid())
+  electionId   String
+  election     Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  name         String
+  geometry     String
+  bufferMeters Int      @default(20)
+  createdAt    DateTime @default(now())
+  voters       Voter[]
+}
+
+model Position {
+  id           String      @id @default(cuid())
+  electionId   String
+  election     Election    @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  title        String
+  description  String      @default("")
+  displayOrder Int         @default(0)
+  createdAt    DateTime    @default(now())
+  candidates   Candidate[]
+  votes        Vote[]
+}
+
+model Candidate {
+  id           String   @id @default(cuid())
+  positionId   String
+  position     Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  name         String
+  description  String   @default("")
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  votes        Vote[]
+}
+
+model CustomField {
+  id           String   @id @default(cuid())
+  electionId   String
+  election     Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  label        String
+  fieldType    String
+  isRequired   Boolean  @default(false)
+  options      String   @default("[]")
+  displayOrder Int      @default(0)
+}
+
+model Voter {
+  id                String   @id @default(cuid())
+  electionId        String
+  election          Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  regionId          String?
+  region            Region?  @relation(fields: [regionId], references: [id])
+  email             String
+  emailVerified     Boolean  @default(false)
+  verificationCode  String?
+  verificationExpiry DateTime?
+  deviceFingerprint String?
+  customFieldValues String   @default("{}")
+  locationLat       Float?
+  locationLng       Float?
+  registeredAt      DateTime @default(now())
+  votes             Vote[]
+
+  @@unique([electionId, email])
+}
+
+model Vote {
+  id          String    @id @default(cuid())
+  electionId  String
+  election    Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  voterId     String
+  voter       Voter     @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  positionId  String
+  position    Position  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  castAt      DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([electionId, voterId, positionId])
+}
