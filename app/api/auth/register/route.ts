@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendVerificationCode } from "@/lib/email";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -26,19 +27,29 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(data.password, 12);
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
     const organizer = await prisma.organizer.create({
       data: {
         name: data.name,
         email: data.email,
         passwordHash,
+        verificationCode,
+        verificationExpiry,
       },
     });
+
+    const sent = await sendVerificationCode(data.email, verificationCode, "organizer");
+    if (!sent) {
+      console.log(`[FALLBACK] Organizer verification code for ${data.email}: ${verificationCode}`);
+    }
 
     return NextResponse.json({
       id: organizer.id,
       name: organizer.name,
       email: organizer.email,
+      devCode: process.env.NODE_ENV === "development" ? verificationCode : undefined,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -47,6 +58,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    console.error("Register error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

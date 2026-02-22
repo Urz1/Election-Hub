@@ -30,14 +30,23 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetch("/api/elections")
+      fetch("/api/auth/me")
         .then((res) => res.json())
+        .then((me) => {
+          if (me.emailVerified === false) {
+            router.push(`/verify-email?email=${encodeURIComponent(me.email)}`);
+            return;
+          }
+          return fetch("/api/elections").then((res) => res.json());
+        })
         .then((data) => {
-          setElections(data);
-          setLoading(false);
+          if (data) {
+            setElections(data);
+            setLoading(false);
+          }
         });
     }
-  }, [status]);
+  }, [status, router]);
 
   if (status === "loading" || loading) {
     return (

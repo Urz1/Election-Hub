@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getElectionPhase } from "@/lib/election-helpers";
 import { isPointInRegion, type GeoRegion } from "@/lib/geo";
+import { sendVerificationCode } from "@/lib/email";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -131,13 +132,14 @@ export async function POST(
       },
     });
 
-    // In production, send email. For dev, log to console.
-    console.log(`[DEV] Verification code for ${data.email}: ${verificationCode}`);
+    const sent = await sendVerificationCode(data.email, verificationCode, "voter");
+    if (!sent) {
+      console.log(`[FALLBACK] Voter verification code for ${data.email}: ${verificationCode}`);
+    }
 
     return NextResponse.json({
       voterId: voter.id,
       message: "Registration successful. Check your email for verification code.",
-      // DEV ONLY: remove in production
       devCode: process.env.NODE_ENV === "development" ? verificationCode : undefined,
     });
   } catch (error) {

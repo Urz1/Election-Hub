@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
@@ -9,6 +10,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/login",
   },
   providers: [
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID!,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+    }),
     Credentials({
       credentials: {
         email: {},
@@ -24,7 +29,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { email },
         });
 
-        if (!organizer) return null;
+        if (!organizer || !organizer.passwordHash) return null;
 
         const valid = await bcrypt.compare(password, organizer.passwordHash);
         if (!valid) return null;
@@ -38,6 +43,54 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        const email = user.email;
+        if (!email) return false;
+
+        let organizer = await prisma.organizer.findUnique({
+          where: { email },
+        });
+
+        if (!organizer) {
+          organizer = await prisma.organizer.create({
+            data: {
+              name: user.name || email.split("@")[0],
+              email,
+              emailVerified: true,
+            },
+          });
+        } else if (!organizer.emailVerified) {
+          await prisma.organizer.update({
+            where: { id: organizer.id },
+            data: { emailVerified: true },
+          });
+        }
+
+        const existingAccount = await prisma.account.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: "google",
+              providerAccountId: account.providerAccountId,
+            },
+          },
+        });
+
+        if (!existingAccount) {
+          await prisma.account.create({
+            data: {
+              organizerId: organizer.id,
+              provider: "google",
+              providerAccountId: account.providerAccountId,
+            },
+          });
+        }
+
+        user.id = organizer.id;
+      }
+
+      return true;
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
