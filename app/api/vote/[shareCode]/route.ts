@@ -52,6 +52,7 @@ export async function GET(
         id: c.id,
         name: c.name,
         description: c.description,
+        photoUrl: c.photoUrl,
       })),
     })),
     regions: election.regions,

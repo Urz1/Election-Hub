@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use, useCallback } from "react";
 import { Vote, Mail, MapPin, Check, ArrowRight, Loader2, Clock } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,7 @@ interface PositionInfo {
   id: string;
   title: string;
   description: string;
-  candidates: { id: string; name: string; description: string }[];
+  candidates: { id: string; name: string; description: string; photoUrl?: string }[];
 }
 
 interface ElectionInfo {
@@ -43,7 +44,7 @@ interface ResultsPosition {
   title: string;
   totalVotes: number;
   currentVote: string | null;
-  candidates: { id: string; name: string; votes: number; percentage: number }[];
+  candidates: { id: string; name: string; photoUrl?: string; votes: number; percentage: number }[];
 }
 
 type VoterStep = "loading" | "info" | "register" | "verify" | "vote" | "done" | "results" | "closed" | "registered_waiting" | "error";
@@ -390,7 +391,17 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
                   <Label>
                     {field.label} {field.isRequired && "*"}
                   </Label>
-                  {field.fieldType === "dropdown" ? (
+                  {field.fieldType === "image" ? (
+                    <ImageUpload
+                      value={customValues[field.id] || undefined}
+                      onChange={(url) => setCustomValues({ ...customValues, [field.id]: url })}
+                      onRemove={() => {
+                        const updated = { ...customValues };
+                        delete updated[field.id];
+                        setCustomValues(updated);
+                      }}
+                    />
+                  ) : field.fieldType === "dropdown" ? (
                     <Select
                       value={customValues[field.id] || ""}
                       onValueChange={(v) => setCustomValues({ ...customValues, [field.id]: v })}
@@ -502,10 +513,17 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
                         >
                           {selectedVotes[pos.id] === c.id && <Check className="h-3 w-3 text-white" />}
                         </div>
-                        <div>
+                        {c.photoUrl ? (
+                          <img src={c.photoUrl} alt={c.name} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-500 flex-shrink-0">
+                            {c.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
                           <p className="font-medium text-sm">{c.name}</p>
                           {c.description && (
-                            <p className="text-xs text-muted-foreground">{c.description}</p>
+                            <p className="text-xs text-muted-foreground truncate">{c.description}</p>
                           )}
                         </div>
                       </div>
@@ -569,12 +587,21 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
                   {pos.candidates.map((c) => (
                     <div key={c.id} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">
-                          {c.name}
-                          {pos.currentVote === c.id && (
-                            <Badge variant="secondary" className="ml-2 text-xs">Your vote</Badge>
+                        <div className="flex items-center gap-2">
+                          {c.photoUrl ? (
+                            <img src={c.photoUrl} alt={c.name} className="h-6 w-6 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-500 flex-shrink-0">
+                              {c.name.charAt(0).toUpperCase()}
+                            </div>
                           )}
-                        </span>
+                          <span className="font-medium">
+                            {c.name}
+                            {pos.currentVote === c.id && (
+                              <Badge variant="secondary" className="ml-2 text-xs">Your vote</Badge>
+                            )}
+                          </span>
+                        </div>
                         <span className="text-muted-foreground">
                           {c.votes} ({c.percentage.toFixed(1)}%)
                         </span>

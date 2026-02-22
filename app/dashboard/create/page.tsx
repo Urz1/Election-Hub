@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Vote, Plus, Trash2, ArrowLeft, ArrowRight, Check, Users } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ const MapDraw = dynamic(() => import("@/components/map-draw"), { ssr: false });
 interface CandidateInput {
   name: string;
   description: string;
+  photoUrl?: string;
 }
 
 interface PositionInput {
@@ -29,7 +31,7 @@ interface PositionInput {
 
 interface CustomFieldInput {
   label: string;
-  fieldType: "text" | "number" | "dropdown" | "phone";
+  fieldType: "text" | "number" | "dropdown" | "phone" | "image";
   isRequired: boolean;
   options: string[];
 }
@@ -49,8 +51,8 @@ export default function CreateElectionPage() {
       title: "",
       description: "",
       candidates: [
-        { name: "", description: "" },
-        { name: "", description: "" },
+        { name: "", description: "", photoUrl: undefined },
+        { name: "", description: "", photoUrl: undefined },
       ],
     },
   ]);
@@ -89,7 +91,7 @@ export default function CreateElectionPage() {
     const updated = [...positions];
     updated[posIndex] = {
       ...updated[posIndex],
-      candidates: [...updated[posIndex].candidates, { name: "", description: "" }],
+      candidates: [...updated[posIndex].candidates, { name: "", description: "", photoUrl: undefined }],
     };
     setPositions(updated);
   }
@@ -106,7 +108,7 @@ export default function CreateElectionPage() {
   function addPosition() {
     setPositions([
       ...positions,
-      { title: "", description: "", candidates: [{ name: "", description: "" }, { name: "", description: "" }] },
+      { title: "", description: "", candidates: [{ name: "", description: "", photoUrl: undefined }, { name: "", description: "", photoUrl: undefined }] },
     ]);
   }
 
@@ -138,7 +140,7 @@ export default function CreateElectionPage() {
             description: p.description || undefined,
             candidates: p.candidates
               .filter((c) => c.name.trim())
-              .map((c) => ({ name: c.name, description: c.description || undefined })),
+              .map((c) => ({ name: c.name, description: c.description || undefined, photoUrl: c.photoUrl || undefined })),
           })),
           regions: regions.length > 0 ? regions : undefined,
           customFields: customFields.length > 0
@@ -295,6 +297,24 @@ export default function CreateElectionPage() {
                           <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
                             {ci + 1}
                           </div>
+                          <ImageUpload
+                            value={cand.photoUrl}
+                            onChange={(url) => {
+                              const updated = [...positions];
+                              const candidates = [...updated[pi].candidates];
+                              candidates[ci] = { ...candidates[ci], photoUrl: url };
+                              updated[pi] = { ...updated[pi], candidates };
+                              setPositions(updated);
+                            }}
+                            onRemove={() => {
+                              const updated = [...positions];
+                              const candidates = [...updated[pi].candidates];
+                              candidates[ci] = { ...candidates[ci], photoUrl: undefined };
+                              updated[pi] = { ...updated[pi], candidates };
+                              setPositions(updated);
+                            }}
+                            compact
+                          />
                           <Input
                             value={cand.name}
                             onChange={(e) => updateCandidate(pi, ci, "name", e.target.value)}
@@ -391,6 +411,7 @@ export default function CreateElectionPage() {
                           <SelectItem value="number">Number</SelectItem>
                           <SelectItem value="dropdown">Dropdown</SelectItem>
                           <SelectItem value="phone">Phone</SelectItem>
+                          <SelectItem value="image">Image Upload</SelectItem>
                         </SelectContent>
                       </Select>
                       <div className="flex items-center gap-2">
@@ -515,8 +536,16 @@ export default function CreateElectionPage() {
                   {positions.map((p, i) => (
                     <div key={i} className="bg-slate-50 rounded-md px-3 py-2 text-sm">
                       <span className="font-semibold">{p.title}</span>
-                      <span className="text-muted-foreground"> — </span>
-                      {p.candidates.filter((c) => c.name.trim()).map((c) => c.name).join(", ")}
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {p.candidates.filter((c) => c.name.trim()).map((c, ci) => (
+                          <span key={ci} className="inline-flex items-center gap-1.5 bg-white border rounded-full px-2 py-0.5 text-xs">
+                            {c.photoUrl && (
+                              <img src={c.photoUrl} alt={c.name} className="h-4 w-4 rounded-full object-cover" />
+                            )}
+                            {c.name}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>

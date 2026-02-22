@@ -7,7 +7,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: "ElectHub — Election Management Platform",
+  title: "ElectHub | Election Management Platform",
   description: "Create, manage, and run secure elections with region-based access control and live dashboards.",
 };
 

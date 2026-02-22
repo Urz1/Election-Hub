@@ -27,7 +27,7 @@ interface PositionStats {
   id: string;
   title: string;
   totalVotes: number;
-  candidates: { id: string; name: string; votes: number; percentage: number }[];
+  candidates: { id: string; name: string; photoUrl?: string; votes: number; percentage: number }[];
 }
 
 interface Stats {
@@ -45,6 +45,7 @@ interface VoterRow {
   email: string;
   emailVerified: boolean;
   region: string | null;
+  customFieldValues: Record<string, string>;
   hasVoted: boolean;
   registeredAt: string;
 }
@@ -103,12 +104,17 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
   }
 
   function exportVotersCSV() {
-    const headers = ["Email", "Region", "Verified", "Voted", "Registered At"];
+    const customFieldLabels = election ? election.customFields.map((f) => f.label) : [];
+    const headers = ["Email", "Region", ...customFieldLabels, "Verified", "Voted", "Registered At"];
     const rows = voters.map((v) => [
-      v.email, v.region || "", v.emailVerified ? "Yes" : "No", v.hasVoted ? "Yes" : "No",
+      v.email,
+      v.region || "",
+      ...(election ? election.customFields.map((f) => v.customFieldValues[f.id] || "") : []),
+      v.emailVerified ? "Yes" : "No",
+      v.hasVoted ? "Yes" : "No",
       new Date(v.registeredAt).toLocaleString(),
     ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const csv = [headers, ...rows].map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -215,10 +221,19 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
                   {pos.candidates.map((c, i) => (
                     <div key={c.id} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">
-                          {i === 0 && pos.totalVotes > 0 && "🏆 "}
-                          {c.name}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          {c.photoUrl ? (
+                            <img src={c.photoUrl} alt={c.name} className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-500 flex-shrink-0">
+                              {c.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="font-medium">
+                            {i === 0 && pos.totalVotes > 0 && "🏆 "}
+                            {c.name}
+                          </span>
+                        </div>
                         <span className="text-muted-foreground">
                           {c.votes} votes ({c.percentage.toFixed(1)}%)
                         </span>
@@ -289,6 +304,9 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
                       <tr className="border-b">
                         <th className="text-left py-2 font-medium">Email</th>
                         <th className="text-left py-2 font-medium">Region</th>
+                        {election.customFields.map((f) => (
+                          <th key={f.id} className="text-left py-2 font-medium">{f.label}</th>
+                        ))}
                         <th className="text-center py-2 font-medium">Verified</th>
                         <th className="text-center py-2 font-medium">Voted</th>
                         <th className="text-right py-2 font-medium">Registered</th>
@@ -299,6 +317,21 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
                         <tr key={v.id} className="border-b last:border-0">
                           <td className="py-2 font-mono text-xs">{v.email}</td>
                           <td className="py-2">{v.region || "—"}</td>
+                          {election.customFields.map((f) => (
+                            <td key={f.id} className="py-2">
+                              {f.fieldType === "image" && v.customFieldValues[f.id] ? (
+                                <a href={v.customFieldValues[f.id]} target="_blank" rel="noopener noreferrer">
+                                  <img
+                                    src={v.customFieldValues[f.id]}
+                                    alt={f.label}
+                                    className="h-8 w-8 rounded object-cover border hover:ring-2 hover:ring-primary cursor-pointer"
+                                  />
+                                </a>
+                              ) : (
+                                <span className="text-xs">{v.customFieldValues[f.id] || "—"}</span>
+                              )}
+                            </td>
+                          ))}
                           <td className="text-center py-2">
                             <Badge variant="secondary" className={v.emailVerified ? "bg-green-100 text-green-700" : ""}>
                               {v.emailVerified ? "Yes" : "No"}

@@ -83,7 +83,7 @@ export default function LandingPage() {
       </main>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        <p>ElectHub — Secure election management platform</p>
+        <p>ElectHub | Secure election management platform</p>
       </footer>
     </div>
   );

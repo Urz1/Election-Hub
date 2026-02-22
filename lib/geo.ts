@@ -2,7 +2,7 @@ import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { point, polygon, type Position } from "@turf/helpers";
 
 export interface GeoRegion {
-  type: "polygon" | "circle";
+  type: "polygon" | "circle" | "rectangle";
   coordinates?: Position[][];
   center?: [number, number]; // [lng, lat]
   radius?: number; // meters
@@ -26,7 +26,7 @@ export function isPointInRegion(
     return distance <= geometry.radius + bufferMeters;
   }
 
-  if (geometry.type === "polygon" && geometry.coordinates) {
+  if ((geometry.type === "polygon" || geometry.type === "rectangle") && geometry.coordinates) {
     const poly = polygon(geometry.coordinates);
     if (booleanPointInPolygon(pt, poly)) return true;
 

@@ -6,6 +6,7 @@ import { z } from "zod";
 const candidateSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
+  photoUrl: z.string().url().optional(),
 });
 
 const positionSchema = z.object({
@@ -31,7 +32,7 @@ const createElectionSchema = z.object({
     .array(
       z.object({
         label: z.string().min(1),
-        fieldType: z.enum(["text", "number", "dropdown", "phone"]),
+        fieldType: z.enum(["text", "number", "dropdown", "phone", "image"]),
         isRequired: z.boolean().optional(),
         options: z.array(z.string()).optional(),
       })
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
               create: p.candidates.map((c, ci) => ({
                 name: c.name,
                 description: c.description || "",
+                photoUrl: c.photoUrl || null,
                 displayOrder: ci,
               })),
             },

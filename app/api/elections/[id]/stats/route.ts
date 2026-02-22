@@ -54,6 +54,7 @@ export async function GET(
         return {
           id: c.id,
           name: c.name,
+          photoUrl: c.photoUrl,
           votes: cVotes,
           percentage: totalPosVotes > 0 ? (cVotes / totalPosVotes) * 100 : 0,
         };

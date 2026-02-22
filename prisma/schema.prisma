@@ -89,6 +89,7 @@ model Candidate {
   position     Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
   name         String
   description  String   @default("")
+  photoUrl     String?
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
   votes        Vote[]
