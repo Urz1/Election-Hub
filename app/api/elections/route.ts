@@ -49,6 +49,7 @@ const createElectionSchema = z.object({
   showLiveResults: z.boolean().optional(),
   resultsVisibility: z.enum(["organizer", "voters", "public"]).optional(),
   requireLocation: z.boolean().optional(),
+  autoTransition: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -103,6 +104,10 @@ export async function POST(request: Request) {
         showLiveResults: data.showLiveResults || false,
         resultsVisibility: data.resultsVisibility || "organizer",
         requireLocation: data.requireLocation || false,
+        autoTransition: data.autoTransition ?? true,
+        // Auto-transition elections start active so dates control phases;
+        // manual elections start as draft until the organizer advances them.
+        status: (data.autoTransition ?? true) ? "registration" : "draft",
         positions: {
           create: data.positions.map((p, pi) => ({
             title: p.title,

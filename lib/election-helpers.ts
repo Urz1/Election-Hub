@@ -8,9 +8,36 @@ export function getElectionPhase(election: Election): ElectionPhase {
 
   const now = new Date();
 
-  // Status acts as a gate: the organizer must explicitly advance each election.
-  // "registration" status can reach before_registration / registration / between_phases.
-  // "voting" status can reach voting or auto-close when past voting end.
+  if (election.autoTransition) {
+    // Auto mode: dates drive the phase. The organizer sets a schedule and phases
+    // transition automatically. Status only gates draft/closed.
+    const pastVoteEnd = election.votingEnd && now > election.votingEnd;
+    if (pastVoteEnd) return "closed";
+
+    const inVoting = election.votingStart && now >= election.votingStart
+      && election.votingEnd && now <= election.votingEnd;
+    if (inVoting) return "voting";
+
+    // Allow voting even without end date if status is voting and start has passed
+    if (election.status === "voting" && election.votingStart && now >= election.votingStart) return "voting";
+    if (election.status === "voting" && !election.votingStart) return "voting";
+
+    const beforeRegStart = election.registrationStart && now < election.registrationStart;
+    if (beforeRegStart) return "before_registration";
+
+    const inRegistration = election.registrationStart && now >= election.registrationStart
+      && (!election.registrationEnd || now <= election.registrationEnd);
+    if (inRegistration) return "registration";
+
+    const pastRegEnd = election.registrationEnd && now > election.registrationEnd;
+    if (pastRegEnd) return "between_phases";
+
+    return election.status as ElectionPhase;
+  }
+
+  // Manual mode: the organizer must explicitly advance each election via
+  // "Open Registration" / "Open Voting" / "Close Election" buttons.
+  // Status acts as a hard gate for the maximum reachable phase.
   if (election.status === "registration") {
     if (election.registrationStart && now < election.registrationStart) {
       return "before_registration";

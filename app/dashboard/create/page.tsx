@@ -69,6 +69,7 @@ export default function CreateElectionPage() {
   const [allowVoteUpdate, setAllowVoteUpdate] = useState(false);
   const [showLiveResults, setShowLiveResults] = useState(false);
   const [resultsVisibility, setResultsVisibility] = useState<"organizer" | "voters" | "public">("organizer");
+  const [autoTransition, setAutoTransition] = useState(true);
 
   if (status === "unauthenticated") {
     router.push("/login");
@@ -183,6 +184,7 @@ export default function CreateElectionPage() {
           showLiveResults,
           resultsVisibility,
           requireLocation,
+          autoTransition,
         }),
       });
 
@@ -536,6 +538,17 @@ export default function CreateElectionPage() {
                   ))}
                 </div>
               )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Auto-start phases on schedule</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {autoTransition
+                      ? "Registration and voting will start/stop automatically based on the dates above"
+                      : "You will manually open registration, voting, and close the election from the dashboard"}
+                  </p>
+                </div>
+                <Switch checked={autoTransition} onCheckedChange={setAutoTransition} />
+              </div>
               <div className="space-y-2">
                 <Label>Security Level</Label>
                 <Select value={securityLevel} onValueChange={(v) => setSecurityLevel(v as typeof securityLevel)}>
@@ -612,6 +625,7 @@ export default function CreateElectionPage() {
               <ReviewItem label="Custom Fields" value={customFields.length > 0 ? customFields.map((f) => f.label).join(", ") : "None"} />
               <ReviewItem label="Registration" value={registrationStart && registrationEnd ? `${new Date(registrationStart).toLocaleString()} — ${new Date(registrationEnd).toLocaleString()}` : "Not set (manual control)"} />
               <ReviewItem label="Voting" value={votingStart && votingEnd ? `${new Date(votingStart).toLocaleString()} — ${new Date(votingEnd).toLocaleString()}` : "Not set (manual control)"} />
+              <ReviewItem label="Phase Transitions" value={autoTransition ? "Automatic (based on schedule)" : "Manual (organizer controls)"} />
               <ReviewItem label="Security" value={securityLevel} />
               <ReviewItem label="Vote Updates" value={allowVoteUpdate ? "Allowed" : "Not allowed"} />
               <ReviewItem label="Live Results" value={showLiveResults ? "Visible to voters" : "Hidden during voting"} />

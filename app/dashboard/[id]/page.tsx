@@ -265,6 +265,9 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
             <h1 className="font-semibold truncate">{election.title}</h1>
           </div>
           <Badge className={getPhaseColor(phase)} variant="secondary">{getPhaseLabel(phase)}</Badge>
+          <Badge variant="outline" className="text-xs">
+            {election.autoTransition ? "Auto" : "Manual"}
+          </Badge>
         </div>
       </header>
 
@@ -273,20 +276,37 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
           <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(shareLink); toast.success("Link copied!"); }}>
             <Copy className="h-3 w-3 mr-1" /> Copy Voter Link
           </Button>
-          {(phase === "draft" || phase === "before_registration") && (
-            <Button size="sm" onClick={() => updateStatus("registration")} disabled={updatingStatus}>
-              <Play className="h-3 w-3 mr-1" /> {updatingStatus ? "Updating..." : "Open Registration"}
-            </Button>
-          )}
-          {phase === "registration" && (
-            <Button size="sm" onClick={() => updateStatus("voting")} disabled={updatingStatus}>
-              <Play className="h-3 w-3 mr-1" /> {updatingStatus ? "Updating..." : "Open Voting"}
-            </Button>
-          )}
-          {phase === "voting" && (
-            <Button size="sm" variant="destructive" onClick={() => updateStatus("closed")} disabled={updatingStatus}>
-              <Square className="h-3 w-3 mr-1" /> {updatingStatus ? "Closing..." : "Close Election"}
-            </Button>
+          {election?.autoTransition ? (
+            <>
+              {phase === "draft" && (
+                <Button size="sm" onClick={() => updateStatus("registration")} disabled={updatingStatus}>
+                  <Play className="h-3 w-3 mr-1" /> {updatingStatus ? "Activating..." : "Activate Election"}
+                </Button>
+              )}
+              {phase !== "draft" && phase !== "closed" && (
+                <Button size="sm" variant="destructive" onClick={() => updateStatus("closed")} disabled={updatingStatus}>
+                  <Square className="h-3 w-3 mr-1" /> {updatingStatus ? "Closing..." : "Close Election"}
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              {(phase === "draft" || phase === "before_registration") && (
+                <Button size="sm" onClick={() => updateStatus("registration")} disabled={updatingStatus}>
+                  <Play className="h-3 w-3 mr-1" /> {updatingStatus ? "Updating..." : "Open Registration"}
+                </Button>
+              )}
+              {(phase === "registration" || phase === "between_phases") && (
+                <Button size="sm" onClick={() => updateStatus("voting")} disabled={updatingStatus}>
+                  <Play className="h-3 w-3 mr-1" /> {updatingStatus ? "Updating..." : "Open Voting"}
+                </Button>
+              )}
+              {phase === "voting" && (
+                <Button size="sm" variant="destructive" onClick={() => updateStatus("closed")} disabled={updatingStatus}>
+                  <Square className="h-3 w-3 mr-1" /> {updatingStatus ? "Closing..." : "Close Election"}
+                </Button>
+              )}
+            </>
           )}
           <Button size="sm" variant="ghost" onClick={() => { fetchElection(); fetchStats(); fetchVoters(); }}>
             <RefreshCw className="h-3 w-3 mr-1" /> Refresh
@@ -717,6 +737,19 @@ function GeneralSettings({
           lockReason="Cannot change after voting has started"
           saving={saving === "allowVoteUpdate"}
           onSave={(val) => saveField("allowVoteUpdate", val)}
+        />
+        <ToggleField
+          label="Auto-start phases on schedule"
+          description={
+            election.autoTransition
+              ? "Phases transition automatically based on scheduled dates"
+              : "You manually open registration, voting, and close the election"
+          }
+          value={election.autoTransition}
+          locked={isClosed}
+          lockReason="Election is closed"
+          saving={saving === "autoTransition"}
+          onSave={(val) => saveField("autoTransition", val)}
         />
         <ToggleField
           label="Show Live Results"

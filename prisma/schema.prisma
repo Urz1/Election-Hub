@@ -54,6 +54,7 @@ model Election {
   showLiveResults     Boolean           @default(false)
   resultsVisibility   String            @default("organizer")
   requireLocation     Boolean           @default(false)
+  autoTransition      Boolean           @default(true)
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
   regions             Region[]

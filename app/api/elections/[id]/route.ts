@@ -311,6 +311,7 @@ export async function PATCH(
       ...(body.showLiveResults !== undefined && { showLiveResults: body.showLiveResults }),
       ...(body.resultsVisibility !== undefined && { resultsVisibility: body.resultsVisibility }),
       ...(body.requireLocation !== undefined && { requireLocation: body.requireLocation }),
+      ...(body.autoTransition !== undefined && { autoTransition: body.autoTransition }),
     },
   });
 
