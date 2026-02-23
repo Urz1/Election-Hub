@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
 
-export async function middleware(request: NextRequest) {
+const isProduction = process.env.NODE_ENV === "production";
+const SESSION_COOKIE = isProduction
+  ? "__Secure-authjs.session-token"
+  : "authjs.session-token";
+
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // --- Auth guard for dashboard routes ---
+  // --- Auth guard for dashboard routes (lightweight cookie check) ---
   if (pathname.startsWith("/dashboard")) {
-    const session = await auth();
-    if (!session?.user) {
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    if (!token) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
