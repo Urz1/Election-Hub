@@ -8,35 +8,26 @@ export function getElectionPhase(election: Election): ElectionPhase {
 
   const now = new Date();
 
-  const beforeRegStart = election.registrationStart && now < election.registrationStart;
-  const inRegistration = election.registrationStart && now >= election.registrationStart
-    && election.registrationEnd && now <= election.registrationEnd;
-  const pastRegEnd = election.registrationEnd && now > election.registrationEnd;
+  // Status acts as a gate: the organizer must explicitly advance each election.
+  // "registration" status can reach before_registration / registration / between_phases.
+  // "voting" status can reach voting or auto-close when past voting end.
+  if (election.status === "registration") {
+    if (election.registrationStart && now < election.registrationStart) {
+      return "before_registration";
+    }
+    if (election.registrationEnd && now > election.registrationEnd) {
+      return "between_phases";
+    }
+    return "registration";
+  }
 
-  const beforeVoteStart = election.votingStart && now < election.votingStart;
-  const inVoting = election.votingStart && now >= election.votingStart
-    && election.votingEnd && now <= election.votingEnd;
-  const pastVoteEnd = election.votingEnd && now > election.votingEnd;
+  if (election.status === "voting") {
+    if (election.votingEnd && now > election.votingEnd) {
+      return "closed";
+    }
+    return "voting";
+  }
 
-  // Voting takes priority — if we're inside the voting window, it's voting.
-  if (inVoting) return "voting";
-
-  // Past voting end → closed (regardless of registration dates)
-  if (pastVoteEnd) return "closed";
-
-  // Before registration starts
-  if (beforeRegStart) return "before_registration";
-
-  // Inside registration window (and not yet in voting)
-  if (inRegistration) return "registration";
-
-  // Registration ended, voting hasn't started yet
-  if (pastRegEnd && beforeVoteStart) return "between_phases";
-
-  // Registration ended, no voting dates set
-  if (pastRegEnd && !election.votingStart) return "between_phases";
-
-  // No dates match — fall back to status
   return election.status as ElectionPhase;
 }
 

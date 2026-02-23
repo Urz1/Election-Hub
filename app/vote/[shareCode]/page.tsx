@@ -67,6 +67,19 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    // Reset all voter state when switching between elections
+    setElection(null);
+    setStep("loading");
+    setError("");
+    setEmail("");
+    setCustomValues({});
+    setVoterId("");
+    setVerificationCode("");
+    setDevCode("");
+    setSelectedVotes({});
+    setResultsData([]);
+    setSubmitting(false);
+
     fetch(`/api/vote/${shareCode}`)
       .then((res) => {
         if (!res.ok) throw new Error("Election not found");
