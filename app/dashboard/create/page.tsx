@@ -194,7 +194,7 @@ export default function CreateElectionPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 pb-24">
         <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
           {STEPS.map((s, i) => (
             <button
