@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Vote } from "lucide-react";
+import { LogoIcon } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,7 +78,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <Vote className="h-8 w-8 text-primary" />
+            <LogoIcon size={40} />
           </div>
           <CardTitle className="text-2xl">Create an account</CardTitle>
           <CardDescription>Register as an election organizer</CardDescription>

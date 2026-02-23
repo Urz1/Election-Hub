@@ -12,6 +12,7 @@ type AuditAction =
   | "election.status_change"
   | "election.delete"
   | "election.schedule_change"
+  | "election.settings_change"
   | "voter.register"
   | "voter.verify"
   | "voter.vote_cast"

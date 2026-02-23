@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use, useCallback } from "react";
 import { Vote, Mail, MapPin, Check, ArrowRight, Loader2, Clock, CalendarClock } from "lucide-react";
+import { LogoIcon } from "@/components/logo";
 import { ImageUpload } from "@/components/image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,13 +172,21 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
         const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             enableHighAccuracy: true,
-            timeout: 10000,
+            timeout: 30000,
+            maximumAge: 60000,
           });
         });
         latitude = pos.coords.latitude;
         longitude = pos.coords.longitude;
-      } catch {
-        toast.error("Location access is required for this election");
+      } catch (geoErr) {
+        const err = geoErr as GeolocationPositionError;
+        if (err?.code === 1) {
+          toast.error("Please allow location access in your browser settings and try again.");
+        } else if (err?.code === 3) {
+          toast.error("Location request timed out. Please check your GPS/network and try again.");
+        } else {
+          toast.error("Could not determine your location. Please enable GPS and try again.");
+        }
         setSubmitting(false);
         return;
       }
@@ -340,8 +349,8 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <header className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-2">
-          <Vote className="h-5 w-5 text-primary" />
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-2.5">
+          <LogoIcon size={24} className="flex-shrink-0" />
           <span className="font-semibold text-sm truncate">{election.title}</span>
         </div>
       </header>

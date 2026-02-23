@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Vote, Users, BarChart3, LogOut, ExternalLink } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { toast } from "sonner";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -60,10 +61,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-50">
       <header className="border-b bg-white sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Vote className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">ElectHub</span>
-          </div>
+          <Logo size="md" />
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">{session?.user?.name}</span>
             <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>

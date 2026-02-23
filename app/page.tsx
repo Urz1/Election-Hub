@@ -1,16 +1,14 @@
 import Link from "next/link";
-import { Vote, Shield, MapPin, BarChart3, Users, Clock } from "lucide-react";
+import { Shield, MapPin, BarChart3, Users, Clock, Vote, Github, Linkedin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Logo, LogoIcon } from "@/components/logo";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Vote className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">ElectHub</span>
-          </div>
+          <Logo size="md" />
           <div className="flex items-center gap-2">
             <Link href="/login">
               <Button variant="ghost" size="sm">Log in</Button>
@@ -82,8 +80,49 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        <p>ElectHub | Secure election management platform</p>
+      <footer className="border-t bg-slate-900 text-slate-400">
+        <div className="max-w-6xl mx-auto px-4 py-10">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col items-center sm:items-start gap-2">
+              <div className="flex items-center gap-2">
+                <LogoIcon size={24} />
+                <span className="font-bold text-lg text-white">
+                  Elect<span className="text-emerald-500">Hub</span>
+                </span>
+              </div>
+              <p className="text-sm">Secure election management platform</p>
+            </div>
+
+            <div className="flex flex-col items-center sm:items-end gap-2">
+              <p className="text-sm">
+                Built by{" "}
+                <a
+                  href="https://sadam.tech"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-emerald-400 font-medium hover:text-emerald-300 transition-colors"
+                >
+                  Sadam Husen Ali
+                </a>
+              </p>
+              <div className="flex items-center gap-3">
+                <a href="https://github.com/Urz1" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="GitHub">
+                  <Github className="h-5 w-5" />
+                </a>
+                <a href="https://linkedin.com/in/sadam-husen-16s" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn">
+                  <Linkedin className="h-5 w-5" />
+                </a>
+                <a href="https://sadam.tech" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Portfolio">
+                  <Globe className="h-5 w-5" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
+            <p>&copy; {new Date().getFullYear()} ElectHub. All rights reserved.</p>
+          </div>
+        </div>
       </footer>
     </div>
   );

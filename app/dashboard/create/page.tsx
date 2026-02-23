@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Vote, Plus, Trash2, ArrowLeft, ArrowRight, Check, Users, AlertCircle } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, ArrowRight, Check, Users, AlertCircle } from "lucide-react";
+import { LogoIcon } from "@/components/logo";
 import { ImageUpload } from "@/components/image-upload";
 import { validateElectionTimes } from "@/lib/time-validation";
 import { Button } from "@/components/ui/button";
@@ -210,7 +211,7 @@ export default function CreateElectionPage() {
             Dashboard
           </Button>
           <div className="flex items-center gap-2">
-            <Vote className="h-5 w-5 text-primary" />
+            <LogoIcon size={24} />
             <span className="font-semibold">Create Election</span>
           </div>
         </div>

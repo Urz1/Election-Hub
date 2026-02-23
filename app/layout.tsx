@@ -10,13 +10,15 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#ffffff",
+  themeColor: "#1e293b",
 };
 
 export const metadata: Metadata = {
   title: "ElectHub | Election Management Platform",
   description: "Create, manage, and run secure elections with region-based access control and live dashboards.",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "ElectHub" },
+  authors: [{ name: "Sadam Husen Ali", url: "https://sadam.tech" }],
+  creator: "Sadam Husen Ali",
 };
 
 export default function RootLayout({
