@@ -11,43 +11,43 @@ export default function LandingPage() {
             <Vote className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl">ElectHub</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link href="/login">
-              <Button variant="ghost">Log in</Button>
+              <Button variant="ghost" size="sm">Log in</Button>
             </Link>
             <Link href="/register">
-              <Button>Get Started</Button>
+              <Button size="sm">Get Started</Button>
             </Link>
           </div>
         </div>
       </header>
 
       <main>
-        <section className="max-w-6xl mx-auto px-4 py-24 text-center">
-          <h1 className="text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+        <section className="max-w-6xl mx-auto px-4 py-16 sm:py-24 text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
             Elections made
             <span className="text-primary"> simple</span>
           </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Create region-based elections in minutes. Share a link with voters,
             track live results, and manage everything from one dashboard.
           </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <Link href="/register">
-              <Button size="lg" className="text-base px-8">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/register" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto text-base px-8">
                 Create an Election
               </Button>
             </Link>
-            <Link href="/login">
-              <Button size="lg" variant="outline" className="text-base px-8">
+            <Link href="/login" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-base px-8">
                 Sign In
               </Button>
             </Link>
           </div>
         </section>
 
-        <section className="max-w-6xl mx-auto px-4 pb-24">
-          <div className="grid md:grid-cols-3 gap-8">
+        <section className="max-w-6xl mx-auto px-4 pb-16 sm:pb-24">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <FeatureCard
               icon={<MapPin className="h-6 w-6" />}
               title="Region-Based Access"

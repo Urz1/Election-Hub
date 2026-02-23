@@ -3,14 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { getElectionPhase } from "@/lib/election-helpers";
 import { isPointInRegion, type GeoRegion } from "@/lib/geo";
 import { sendVerificationCode } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const registerSchema = z.object({
-  email: z.string().email("Invalid email"),
-  customFieldValues: z.record(z.string(), z.any()).optional(),
-  deviceFingerprint: z.string().optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  email: z.string().email("Invalid email").max(320),
+  customFieldValues: z.record(z.string(), z.string()).optional(),
+  deviceFingerprint: z.string().max(128).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export async function POST(
@@ -18,6 +19,15 @@ export async function POST(
   { params }: { params: Promise<{ shareCode: string }> }
 ) {
   const { shareCode } = await params;
+
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, "register");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
 
   try {
     const body = await request.json();
@@ -88,7 +98,12 @@ export async function POST(
       }
 
       for (const region of election.regions) {
-        const geometry: GeoRegion = JSON.parse(region.geometry);
+        let geometry: GeoRegion;
+        try {
+          geometry = JSON.parse(region.geometry);
+        } catch {
+          continue;
+        }
         if (isPointInRegion(data.latitude, data.longitude, geometry, region.bufferMeters)) {
           assignedRegionId = region.id;
           break;

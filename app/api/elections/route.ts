@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
 import { z } from "zod";
+import { validateElectionTimes } from "@/lib/time-validation";
 
 const candidateSchema = z.object({
   name: z.string().min(1),
@@ -77,6 +79,16 @@ export async function POST(request: Request) {
     const body = await request.json();
     const data = createElectionSchema.parse(body);
 
+    const timeCheck = validateElectionTimes({
+      registrationStart: data.registrationStart,
+      registrationEnd: data.registrationEnd,
+      votingStart: data.votingStart,
+      votingEnd: data.votingEnd,
+    });
+    if (!timeCheck.valid) {
+      return NextResponse.json({ error: timeCheck.errors[0] }, { status: 400 });
+    }
+
     const election = await prisma.election.create({
       data: {
         organizerId: session.user.id,
@@ -126,6 +138,14 @@ export async function POST(request: Request) {
         regions: true,
         customFields: true,
       },
+    });
+
+    audit({
+      action: "election.create",
+      actor: session.user.id,
+      actorType: "organizer",
+      targetId: election.id,
+      meta: { title: election.title },
     });
 
     return NextResponse.json(election);

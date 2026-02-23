@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Vote, Plus, Trash2, ArrowLeft, ArrowRight, Check, Users } from "lucide-react";
+import { Vote, Plus, Trash2, ArrowLeft, ArrowRight, Check, Users, AlertCircle } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
+import { validateElectionTimes } from "@/lib/time-validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,47 +75,67 @@ export default function CreateElectionPage() {
   }
 
   function updatePosition(index: number, field: keyof PositionInput, value: string) {
-    const updated = [...positions];
-    updated[index] = { ...updated[index], [field]: value };
-    setPositions(updated);
+    setPositions(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   }
 
   function updateCandidate(posIndex: number, candIndex: number, field: keyof CandidateInput, value: string) {
-    const updated = [...positions];
-    const candidates = [...updated[posIndex].candidates];
-    candidates[candIndex] = { ...candidates[candIndex], [field]: value };
-    updated[posIndex] = { ...updated[posIndex], candidates };
-    setPositions(updated);
+    setPositions(prev => {
+      const updated = [...prev];
+      const candidates = [...updated[posIndex].candidates];
+      candidates[candIndex] = { ...candidates[candIndex], [field]: value };
+      updated[posIndex] = { ...updated[posIndex], candidates };
+      return updated;
+    });
   }
 
   function addCandidate(posIndex: number) {
-    const updated = [...positions];
-    updated[posIndex] = {
-      ...updated[posIndex],
-      candidates: [...updated[posIndex].candidates, { name: "", description: "", photoUrl: undefined }],
-    };
-    setPositions(updated);
+    setPositions(prev => {
+      const updated = [...prev];
+      updated[posIndex] = {
+        ...updated[posIndex],
+        candidates: [...updated[posIndex].candidates, { name: "", description: "", photoUrl: undefined }],
+      };
+      return updated;
+    });
   }
 
   function removeCandidate(posIndex: number, candIndex: number) {
-    const updated = [...positions];
-    updated[posIndex] = {
-      ...updated[posIndex],
-      candidates: updated[posIndex].candidates.filter((_, i) => i !== candIndex),
-    };
-    setPositions(updated);
+    setPositions(prev => {
+      const updated = [...prev];
+      updated[posIndex] = {
+        ...updated[posIndex],
+        candidates: updated[posIndex].candidates.filter((_, i) => i !== candIndex),
+      };
+      return updated;
+    });
   }
 
   function addPosition() {
-    setPositions([
-      ...positions,
+    setPositions(prev => [
+      ...prev,
       { title: "", description: "", candidates: [{ name: "", description: "", photoUrl: undefined }, { name: "", description: "", photoUrl: undefined }] },
     ]);
   }
 
   function removePosition(index: number) {
-    setPositions(positions.filter((_, i) => i !== index));
+    setPositions(prev => prev.filter((_, i) => i !== index));
   }
+
+  const timeErrors = (() => {
+    const hasAnyTime = registrationStart || registrationEnd || votingStart || votingEnd;
+    if (!hasAnyTime) return [];
+    const result = validateElectionTimes({
+      registrationStart: registrationStart || undefined,
+      registrationEnd: registrationEnd || undefined,
+      votingStart: votingStart || undefined,
+      votingEnd: votingEnd || undefined,
+    });
+    return result.errors;
+  })();
 
   function canProceed(): boolean {
     if (step === 0) return title.trim().length > 0;
@@ -123,6 +144,7 @@ export default function CreateElectionPage() {
         (p) => p.title.trim().length > 0 && p.candidates.filter((c) => c.name.trim()).length >= 2
       );
     }
+    if (step === 4) return timeErrors.length === 0;
     return true;
   }
 
@@ -300,18 +322,22 @@ export default function CreateElectionPage() {
                           <ImageUpload
                             value={cand.photoUrl}
                             onChange={(url) => {
-                              const updated = [...positions];
-                              const candidates = [...updated[pi].candidates];
-                              candidates[ci] = { ...candidates[ci], photoUrl: url };
-                              updated[pi] = { ...updated[pi], candidates };
-                              setPositions(updated);
+                              setPositions(prev => {
+                                const updated = [...prev];
+                                const candidates = [...updated[pi].candidates];
+                                candidates[ci] = { ...candidates[ci], photoUrl: url };
+                                updated[pi] = { ...updated[pi], candidates };
+                                return updated;
+                              });
                             }}
                             onRemove={() => {
-                              const updated = [...positions];
-                              const candidates = [...updated[pi].candidates];
-                              candidates[ci] = { ...candidates[ci], photoUrl: undefined };
-                              updated[pi] = { ...updated[pi], candidates };
-                              setPositions(updated);
+                              setPositions(prev => {
+                                const updated = [...prev];
+                                const candidates = [...updated[pi].candidates];
+                                candidates[ci] = { ...candidates[ci], photoUrl: undefined };
+                                updated[pi] = { ...updated[pi], candidates };
+                                return updated;
+                              });
                             }}
                             compact
                           />
@@ -464,21 +490,51 @@ export default function CreateElectionPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Registration Opens</Label>
-                  <Input type="datetime-local" value={registrationStart} onChange={(e) => setRegistrationStart(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={registrationStart}
+                    min={new Date().toISOString().slice(0, 16)}
+                    onChange={(e) => setRegistrationStart(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Registration Closes</Label>
-                  <Input type="datetime-local" value={registrationEnd} onChange={(e) => setRegistrationEnd(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={registrationEnd}
+                    min={registrationStart || new Date().toISOString().slice(0, 16)}
+                    onChange={(e) => setRegistrationEnd(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Voting Opens</Label>
-                  <Input type="datetime-local" value={votingStart} onChange={(e) => setVotingStart(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={votingStart}
+                    min={registrationEnd || registrationStart || new Date().toISOString().slice(0, 16)}
+                    onChange={(e) => setVotingStart(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Voting Closes</Label>
-                  <Input type="datetime-local" value={votingEnd} onChange={(e) => setVotingEnd(e.target.value)} />
+                  <Input
+                    type="datetime-local"
+                    value={votingEnd}
+                    min={votingStart || registrationEnd || new Date().toISOString().slice(0, 16)}
+                    onChange={(e) => setVotingEnd(e.target.value)}
+                  />
                 </div>
               </div>
+              {timeErrors.length > 0 && (
+                <div className="rounded-md border border-red-200 bg-red-50 p-3 space-y-1">
+                  {timeErrors.map((err, i) => (
+                    <div key={i} className="flex items-start gap-2 text-sm text-red-700">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <span>{err}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Security Level</Label>
                 <Select value={securityLevel} onValueChange={(v) => setSecurityLevel(v as typeof securityLevel)}>

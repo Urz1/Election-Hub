@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationCode } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const resendSchema = z.object({
@@ -8,6 +9,15 @@ const resendSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, "register");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email } = resendSchema.parse(body);

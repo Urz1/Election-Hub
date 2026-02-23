@@ -26,40 +26,52 @@ export async function GET(
 
   const phase = getElectionPhase(election);
 
+  const isVoter = voterId
+    ? await prisma.voter.findFirst({ where: { id: voterId, electionId: election.id, emailVerified: true } })
+    : null;
+
   const canSeeResults =
     election.resultsVisibility === "public" ||
+    (election.resultsVisibility === "voters" && !!isVoter) ||
     (election.showLiveResults && phase === "voting") ||
     phase === "closed";
 
-  if (!canSeeResults && election.resultsVisibility !== "voters") {
+  if (!canSeeResults) {
     return NextResponse.json({ error: "Results are not available yet" }, { status: 403 });
   }
 
-  const allVotes = await prisma.vote.findMany({
-    where: { electionId: election.id },
-    select: { positionId: true, candidateId: true, voterId: true },
-  });
+  const [voteCounts, currentVotesRaw] = await Promise.all([
+    prisma.vote.groupBy({
+      by: ["positionId", "candidateId"],
+      where: { electionId: election.id },
+      _count: { id: true },
+    }),
+    voterId
+      ? prisma.vote.findMany({
+          where: { electionId: election.id, voterId },
+          select: { positionId: true, candidateId: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
-  let currentVotes: Record<string, string> = {};
-  if (voterId) {
-    const voterVotes = await prisma.vote.findMany({
-      where: { electionId: election.id, voterId },
-      select: { positionId: true, candidateId: true },
-    });
-    currentVotes = Object.fromEntries(voterVotes.map((v) => [v.positionId, v.candidateId]));
+  const countMap = new Map<string, number>();
+  const positionTotals = new Map<string, number>();
+  for (const row of voteCounts) {
+    countMap.set(`${row.positionId}:${row.candidateId}`, row._count.id);
+    positionTotals.set(row.positionId, (positionTotals.get(row.positionId) || 0) + row._count.id);
   }
 
-  const positions = election.positions.map((pos) => {
-    const posVotes = allVotes.filter((v) => v.positionId === pos.id);
-    const totalPosVotes = posVotes.length;
+  const currentVotes = Object.fromEntries(currentVotesRaw.map((v) => [v.positionId, v.candidateId]));
 
+  const positions = election.positions.map((pos) => {
+    const totalPosVotes = positionTotals.get(pos.id) || 0;
     return {
       id: pos.id,
       title: pos.title,
       totalVotes: totalPosVotes,
       currentVote: currentVotes[pos.id] || null,
       candidates: pos.candidates.map((c) => {
-        const cVotes = posVotes.filter((v) => v.candidateId === c.id).length;
+        const cVotes = countMap.get(`${pos.id}:${c.id}`) || 0;
         return {
           id: c.id,
           name: c.name,

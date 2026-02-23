@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Vote, Users, BarChart3, LogOut, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,11 +41,10 @@ export default function DashboardPage() {
           return fetch("/api/elections").then((res) => res.json());
         })
         .then((data) => {
-          if (data) {
-            setElections(data);
-            setLoading(false);
-          }
-        });
+          if (data) setElections(data);
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
     }
   }, [status, router]);
 
@@ -162,6 +162,7 @@ export default function DashboardPage() {
                           navigator.clipboard.writeText(
                             `${window.location.origin}/vote/${election.shareCode}`
                           );
+                          toast.success("Link copied!");
                         }}
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />

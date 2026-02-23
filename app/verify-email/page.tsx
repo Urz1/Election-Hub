@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Vote, Mail } from "lucide-react";
@@ -10,6 +10,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 
 export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <VerifyEmailContent />
+    </Suspense>
+  );
+}
+
+function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";

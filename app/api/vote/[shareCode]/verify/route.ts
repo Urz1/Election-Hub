@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { z } from "zod";
+import { timingSafeEqual } from "crypto";
 
 const verifySchema = z.object({
-  voterId: z.string(),
-  code: z.string().length(6),
+  voterId: z.string().min(1),
+  code: z.string().length(6).regex(/^\d{6}$/, "Code must be 6 digits"),
 });
 
 export async function POST(
@@ -12,6 +14,15 @@ export async function POST(
   { params }: { params: Promise<{ shareCode: string }> }
 ) {
   const { shareCode } = await params;
+
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, "verify");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
 
   try {
     const body = await request.json();
@@ -37,11 +48,18 @@ export async function POST(
       return NextResponse.json({ message: "Already verified", verified: true });
     }
 
-    if (
-      voter.verificationCode !== data.code ||
-      !voter.verificationExpiry ||
-      new Date() > voter.verificationExpiry
-    ) {
+    if (!voter.verificationExpiry || new Date() > voter.verificationExpiry) {
+      return NextResponse.json(
+        { error: "Verification code has expired. Please request a new one." },
+        { status: 400 }
+      );
+    }
+
+    const storedBuf = Buffer.from(voter.verificationCode || "");
+    const inputBuf = Buffer.from(data.code);
+    const codesMatch = storedBuf.length === inputBuf.length && timingSafeEqual(storedBuf, inputBuf);
+
+    if (!codesMatch) {
       return NextResponse.json(
         { error: "Invalid or expired verification code" },
         { status: 400 }

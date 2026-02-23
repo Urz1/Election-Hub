@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Vote, Check } from "lucide-react";
@@ -11,6 +11,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-pulse text-muted-foreground">Loading...</div></div>}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}
+
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
@@ -110,7 +118,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
               <div className="space-y-2">
@@ -122,7 +130,7 @@ export default function ResetPasswordPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>

@@ -4,10 +4,23 @@ import Google from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
+  },
+  cookies: {
+    sessionToken: {
+      name: isProduction ? "__Secure-authjs.session-token" : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProduction,
+      },
+    },
   },
   providers: [
     Google({

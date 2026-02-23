@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -21,6 +21,8 @@ model Organizer {
   updatedAt           DateTime   @updatedAt
   elections           Election[]
   accounts            Account[]
+
+  @@index([email])
 }
 
 model Account {
@@ -32,6 +34,7 @@ model Account {
   createdAt         DateTime  @default(now())
 
   @@unique([provider, providerAccountId])
+  @@index([organizerId])
 }
 
 model Election {
@@ -58,6 +61,9 @@ model Election {
   customFields        CustomField[]
   voters              Voter[]
   votes               Vote[]
+
+  @@index([organizerId])
+  @@index([shareCode])
 }
 
 model Region {
@@ -65,10 +71,12 @@ model Region {
   electionId   String
   election     Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
   name         String
-  geometry     String
+  geometry     String   @db.Text
   bufferMeters Int      @default(20)
   createdAt    DateTime @default(now())
   voters       Voter[]
+
+  @@index([electionId])
 }
 
 model Position {
@@ -81,6 +89,8 @@ model Position {
   createdAt    DateTime    @default(now())
   candidates   Candidate[]
   votes        Vote[]
+
+  @@index([electionId])
 }
 
 model Candidate {
@@ -93,6 +103,8 @@ model Candidate {
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
   votes        Vote[]
+
+  @@index([positionId])
 }
 
 model CustomField {
@@ -102,28 +114,32 @@ model CustomField {
   label        String
   fieldType    String
   isRequired   Boolean  @default(false)
-  options      String   @default("[]")
+  options      String   @default("[]") @db.Text
   displayOrder Int      @default(0)
+
+  @@index([electionId])
 }
 
 model Voter {
-  id                String   @id @default(cuid())
-  electionId        String
-  election          Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
-  regionId          String?
-  region            Region?  @relation(fields: [regionId], references: [id])
-  email             String
-  emailVerified     Boolean  @default(false)
-  verificationCode  String?
+  id                 String    @id @default(cuid())
+  electionId         String
+  election           Election  @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  regionId           String?
+  region             Region?   @relation(fields: [regionId], references: [id])
+  email              String
+  emailVerified      Boolean   @default(false)
+  verificationCode   String?
   verificationExpiry DateTime?
-  deviceFingerprint String?
-  customFieldValues String   @default("{}")
-  locationLat       Float?
-  locationLng       Float?
-  registeredAt      DateTime @default(now())
-  votes             Vote[]
+  deviceFingerprint  String?
+  customFieldValues  String    @default("{}") @db.Text
+  locationLat        Float?
+  locationLng        Float?
+  registeredAt       DateTime  @default(now())
+  votes              Vote[]
 
   @@unique([electionId, email])
+  @@index([electionId])
+  @@index([deviceFingerprint])
 }
 
 model Vote {
@@ -140,4 +156,23 @@ model Vote {
   updatedAt   DateTime  @updatedAt
 
   @@unique([electionId, voterId, positionId])
+  @@index([electionId])
+  @@index([voterId])
+  @@index([candidateId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  actor     String
+  actorType String
+  targetId  String?
+  meta      String   @default("{}") @db.Text
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([actor])
+  @@index([targetId])
+  @@index([createdAt])
 }

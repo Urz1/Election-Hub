@@ -28,9 +28,7 @@ export function getElectionPhase(election: Election): ElectionPhase {
   if (beforeRegStart) return "before_registration";
 
   // Inside registration window (and not yet in voting)
-  if (inRegistration) {
-    return beforeVoteStart ? "registration" : "registration";
-  }
+  if (inRegistration) return "registration";
 
   // Registration ended, voting hasn't started yet
   if (pastRegEnd && beforeVoteStart) return "between_phases";

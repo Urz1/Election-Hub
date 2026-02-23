@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getElectionPhase } from "@/lib/election-helpers";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { audit } from "@/lib/audit";
 import { z } from "zod";
 
 const castVoteSchema = z.object({
-  voterId: z.string(),
+  voterId: z.string().min(1),
   votes: z.array(
     z.object({
-      positionId: z.string(),
-      candidateId: z.string(),
+      positionId: z.string().min(1),
+      candidateId: z.string().min(1),
     })
   ).min(1, "Must vote for at least one position"),
 });
@@ -18,6 +20,15 @@ export async function POST(
   { params }: { params: Promise<{ shareCode: string }> }
 ) {
   const { shareCode } = await params;
+
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, "vote");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
 
   try {
     const body = await request.json();
@@ -51,7 +62,13 @@ export async function POST(
       return NextResponse.json({ error: "Email not verified" }, { status: 403 });
     }
 
+    const seenPositions = new Set<string>();
     for (const vote of data.votes) {
+      if (seenPositions.has(vote.positionId)) {
+        return NextResponse.json({ error: "Duplicate vote for the same position" }, { status: 400 });
+      }
+      seenPositions.add(vote.positionId);
+
       const position = election.positions.find((p) => p.id === vote.positionId);
       if (!position) {
         return NextResponse.json({ error: `Invalid position: ${vote.positionId}` }, { status: 400 });
@@ -90,6 +107,15 @@ export async function POST(
           candidateId: v.candidateId,
         })),
       });
+    });
+
+    audit({
+      action: isUpdate ? "voter.vote_update" : "voter.vote_cast",
+      actor: voter.email,
+      actorType: "voter",
+      targetId: election.id,
+      meta: { voterId: voter.id, positionCount: data.votes.length },
+      ip,
     });
 
     return NextResponse.json({

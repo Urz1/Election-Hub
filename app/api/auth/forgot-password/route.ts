@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordReset } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import crypto from "crypto";
 import { z } from "zod";
 
@@ -9,6 +10,15 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, "auth");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email } = schema.parse(body);

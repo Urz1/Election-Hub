@@ -132,7 +132,7 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={8}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

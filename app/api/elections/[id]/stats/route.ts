@@ -28,29 +28,37 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const [totalVoters, totalVotes] = await Promise.all([
+  const [totalVoters, votersWhoVoted, voteCounts] = await Promise.all([
     prisma.voter.count({ where: { electionId: id } }),
-    prisma.vote.count({ where: { electionId: id } }),
+    prisma.vote.groupBy({
+      by: ["voterId"],
+      where: { electionId: id },
+    }).then((rows) => rows.length),
+    prisma.vote.groupBy({
+      by: ["positionId", "candidateId"],
+      where: { electionId: id },
+      _count: { id: true },
+    }),
   ]);
 
-  const allVotes = await prisma.vote.findMany({
-    where: { electionId: id },
-    select: { positionId: true, candidateId: true, voterId: true },
-  });
+  const countMap = new Map<string, number>();
+  const positionTotals = new Map<string, number>();
+  for (const row of voteCounts) {
+    const key = `${row.positionId}:${row.candidateId}`;
+    countMap.set(key, row._count.id);
+    positionTotals.set(row.positionId, (positionTotals.get(row.positionId) || 0) + row._count.id);
+  }
 
-  const uniqueVoterIds = new Set(allVotes.map((v) => v.voterId));
-  const votersWhoVoted = uniqueVoterIds.size;
+  const totalVotes = Array.from(positionTotals.values()).reduce((a, b) => a + b, 0);
 
-  const positionResults = election.positions.map((pos) => {
-    const posVotes = allVotes.filter((v) => v.positionId === pos.id);
-    const totalPosVotes = posVotes.length;
-
+  const positions = election.positions.map((pos) => {
+    const totalPosVotes = positionTotals.get(pos.id) || 0;
     return {
       id: pos.id,
       title: pos.title,
       totalVotes: totalPosVotes,
       candidates: pos.candidates.map((c) => {
-        const cVotes = posVotes.filter((v) => v.candidateId === c.id).length;
+        const cVotes = countMap.get(`${pos.id}:${c.id}`) || 0;
         return {
           id: c.id,
           name: c.name,
@@ -64,37 +72,36 @@ export async function GET(
 
   let regionStats = null;
   if (election.regions.length > 0) {
-    const votersByRegion = await prisma.voter.groupBy({
-      by: ["regionId"],
-      where: { electionId: id },
-      _count: { id: true },
+    const [regRegistered, regVoted] = await Promise.all([
+      prisma.voter.groupBy({
+        by: ["regionId"],
+        where: { electionId: id },
+        _count: { id: true },
+      }),
+      prisma.voter.groupBy({
+        by: ["regionId"],
+        where: {
+          electionId: id,
+          votes: { some: {} },
+        },
+        _count: { id: true },
+      }),
+    ]);
+
+    const regMap = Object.fromEntries(regRegistered.map((r) => [r.regionId || "none", r._count.id]));
+    const votedMap = Object.fromEntries(regVoted.map((r) => [r.regionId || "none", r._count.id]));
+
+    regionStats = election.regions.map((r) => {
+      const registered = regMap[r.id] || 0;
+      const voted = votedMap[r.id] || 0;
+      return {
+        id: r.id,
+        name: r.name,
+        registered,
+        voted,
+        turnout: registered > 0 ? (voted / registered) * 100 : 0,
+      };
     });
-
-    const votersWithVotes = await prisma.voter.findMany({
-      where: { electionId: id, id: { in: Array.from(uniqueVoterIds) } },
-      select: { regionId: true },
-    });
-
-    const votedByRegion: Record<string, number> = {};
-    for (const v of votersWithVotes) {
-      if (v.regionId) {
-        votedByRegion[v.regionId] = (votedByRegion[v.regionId] || 0) + 1;
-      }
-    }
-
-    const regionCounts = Object.fromEntries(
-      votersByRegion.map((v) => [v.regionId || "none", v._count.id])
-    );
-
-    regionStats = election.regions.map((r) => ({
-      id: r.id,
-      name: r.name,
-      registered: regionCounts[r.id] || 0,
-      voted: votedByRegion[r.id] || 0,
-      turnout: (regionCounts[r.id] || 0) > 0
-        ? ((votedByRegion[r.id] || 0) / (regionCounts[r.id] || 1)) * 100
-        : 0,
-    }));
   }
 
   return NextResponse.json({
@@ -102,7 +109,7 @@ export async function GET(
     totalVotes,
     votersWhoVoted,
     turnout: totalVoters > 0 ? (votersWhoVoted / totalVoters) * 100 : 0,
-    positions: positionResults,
+    positions,
     regions: regionStats,
     timestamp: new Date().toISOString(),
   });

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/audit";
+import { invalidate } from "@/lib/cache";
+import { getElectionPhase } from "@/lib/election-helpers";
+import { validateElectionTimes } from "@/lib/time-validation";
 
 export async function GET(
   _request: Request,
@@ -54,6 +58,32 @@ export async function PATCH(
 
   const body = await request.json();
 
+  const phase = getElectionPhase(election);
+  const isTimeChange = body.registrationEnd !== undefined
+    || body.registrationStart !== undefined
+    || body.votingStart !== undefined
+    || body.votingEnd !== undefined;
+
+  if (isTimeChange && (phase === "closed" || election.status === "closed")) {
+    return NextResponse.json(
+      { error: "Cannot modify times after voting has ended" },
+      { status: 400 }
+    );
+  }
+
+  if (isTimeChange) {
+    const merged = {
+      registrationStart: body.registrationStart !== undefined ? body.registrationStart : election.registrationStart,
+      registrationEnd: body.registrationEnd !== undefined ? body.registrationEnd : election.registrationEnd,
+      votingStart: body.votingStart !== undefined ? body.votingStart : election.votingStart,
+      votingEnd: body.votingEnd !== undefined ? body.votingEnd : election.votingEnd,
+    };
+    const timeCheck = validateElectionTimes(merged, { allowPast: true });
+    if (!timeCheck.valid) {
+      return NextResponse.json({ error: timeCheck.errors[0] }, { status: 400 });
+    }
+  }
+
   const updated = await prisma.election.update({
     where: { id },
     data: {
@@ -80,6 +110,22 @@ export async function PATCH(
     },
   });
 
+  invalidate(`election:${election.shareCode}`);
+
+  const action = body.status !== undefined
+    ? "election.status_change" as const
+    : isTimeChange
+      ? "election.schedule_change" as const
+      : "election.update" as const;
+
+  audit({
+    action,
+    actor: session.user.id,
+    actorType: "organizer",
+    targetId: id,
+    meta: body.status ? { status: body.status } : isTimeChange ? { ...body } : { fields: Object.keys(body) },
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -103,6 +149,14 @@ export async function DELETE(
   }
 
   await prisma.election.delete({ where: { id } });
+
+  audit({
+    action: "election.delete",
+    actor: session.user.id,
+    actorType: "organizer",
+    targetId: id,
+    meta: { title: election.title },
+  });
 
   return NextResponse.json({ success: true });
 }

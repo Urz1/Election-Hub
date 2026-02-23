@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, use, useCallback } from "react";
-import { Vote, Mail, MapPin, Check, ArrowRight, Loader2, Clock } from "lucide-react";
+import { Vote, Mail, MapPin, Check, ArrowRight, Loader2, Clock, CalendarClock } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,35 +104,58 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
       });
   }, [shareCode]);
 
-  // Poll for phase changes when voter is waiting for voting to start
   useEffect(() => {
     if (step !== "registered_waiting") return;
 
-    const poll = setInterval(async () => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    async function pollPhase() {
       try {
         const res = await fetch(`/api/vote/${shareCode}?t=${Date.now()}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
+        setElection(data);
         if (data.phase === "voting") {
-          setElection(data);
           setStep("vote");
           toast.success("Voting has started! You can cast your vote now.");
         } else if (data.phase === "closed") {
-          setElection(data);
           setStep("closed");
         }
-      } catch { /* ignore */ }
-    }, 4000);
+      } catch { /* network error - retry on next poll */ }
+    }
 
-    return () => clearInterval(poll);
+    function start() {
+      if (interval) clearInterval(interval);
+      interval = setInterval(pollPhase, 4000);
+    }
+    function stop() {
+      if (interval) { clearInterval(interval); interval = null; }
+    }
+    function onVisibility() {
+      if (document.hidden) stop();
+      else { pollPhase(); start(); }
+    }
+
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [step, shareCode]);
 
   const fetchResults = useCallback(async () => {
     if (!election) return;
-    const res = await fetch(`/api/vote/${shareCode}/results?voterId=${voterId}`);
-    if (res.ok) {
-      const data = await res.json();
-      setResultsData(data.positions);
+    try {
+      const res = await fetch(`/api/vote/${shareCode}/results?voterId=${voterId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setResultsData(data.positions);
+      } else {
+        toast.error("Could not load results");
+      }
+    } catch {
+      toast.error("Network error loading results");
     }
   }, [shareCode, voterId, election]);
 
@@ -339,12 +362,12 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
               <PhaseInfo election={election} />
               {election.positions.length > 0 && (
                 <div className="text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">Positions to vote for:</p>
+                  <p className="font-medium text-foreground mb-2">Positions to vote for:</p>
                   {election.positions.map((p) => (
-                    <div key={p.id} className="flex items-center gap-2 py-1">
-                      <Vote className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{p.title}</span>
-                      <span className="text-xs">({p.candidates.length} candidates)</span>
+                    <div key={p.id} className="flex items-center gap-2 py-1.5">
+                      <Vote className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-[15px]">{p.title}</span>
+                      <span className="text-sm text-muted-foreground">({p.candidates.length})</span>
                     </div>
                   ))}
                 </div>
@@ -480,50 +503,58 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
 
         {step === "vote" && (
           <>
-            <div className="text-center mb-2">
+            <div className="text-center mb-3">
               <h2 className="text-xl font-bold">Cast Your Votes</h2>
-              <p className="text-sm text-muted-foreground">Select one candidate for each position</p>
+              <p className="text-sm text-muted-foreground mt-1">Select one candidate for each position</p>
             </div>
+
+            {election.votingEnd && (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-slate-50 rounded-lg px-4 py-2.5">
+                <Clock className="h-4 w-4 flex-shrink-0" />
+                <span>Closes: <span className="font-medium text-foreground">{new Date(election.votingEnd).toLocaleString()}</span></span>
+              </div>
+            )}
 
             {election.positions.map((pos) => (
               <Card key={pos.id}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-base">{pos.title}</CardTitle>
+                  <CardTitle className="text-lg">{pos.title}</CardTitle>
                   {pos.description && (
-                    <CardDescription className="text-xs">{pos.description}</CardDescription>
+                    <CardDescription className="text-sm">{pos.description}</CardDescription>
                   )}
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-2.5">
                   {pos.candidates.map((c) => (
                     <button
                       key={c.id}
                       type="button"
+                      aria-pressed={selectedVotes[pos.id] === c.id}
                       onClick={() => setSelectedVotes({ ...selectedVotes, [pos.id]: c.id })}
-                      className={`w-full text-left rounded-lg border-2 p-3 transition-all ${
+                      className={`w-full text-left rounded-xl border-2 p-4 transition-all active:scale-[0.98] ${
                         selectedVotes[pos.id] === c.id
-                          ? "border-primary bg-primary/5"
+                          ? "border-primary bg-primary/5 shadow-sm"
                           : "border-transparent bg-slate-50 hover:bg-slate-100"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`h-5 w-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                          className={`h-6 w-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                             selectedVotes[pos.id] === c.id ? "border-primary bg-primary" : "border-slate-300"
                           }`}
                         >
-                          {selectedVotes[pos.id] === c.id && <Check className="h-3 w-3 text-white" />}
+                          {selectedVotes[pos.id] === c.id && <Check className="h-3.5 w-3.5 text-white" />}
                         </div>
                         {c.photoUrl ? (
-                          <img src={c.photoUrl} alt={c.name} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                          <img src={c.photoUrl} alt={c.name} className="h-11 w-11 rounded-full object-cover flex-shrink-0" />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-500 flex-shrink-0">
+                          <div className="h-11 w-11 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-500 flex-shrink-0">
                             {c.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <div className="min-w-0">
-                          <p className="font-medium text-sm">{c.name}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-[15px] leading-tight">{c.name}</p>
                           {c.description && (
-                            <p className="text-xs text-muted-foreground truncate">{c.description}</p>
+                            <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{c.description}</p>
                           )}
                         </div>
                       </div>
@@ -533,18 +564,20 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
               </Card>
             ))}
 
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={handleVote}
-              disabled={submitting || Object.keys(selectedVotes).length !== election.positions.length}
-            >
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {submitting ? "Submitting..." : `Submit All Votes (${Object.keys(selectedVotes).length}/${election.positions.length})`}
-            </Button>
+            <div className="sticky bottom-4 pt-2">
+              <Button
+                className="w-full shadow-lg"
+                size="lg"
+                onClick={handleVote}
+                disabled={submitting || Object.keys(selectedVotes).length !== election.positions.length}
+              >
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {submitting ? "Submitting..." : `Submit Votes (${Object.keys(selectedVotes).length}/${election.positions.length})`}
+              </Button>
+            </div>
             {election.allowVoteUpdate && (
-              <p className="text-xs text-center text-muted-foreground">
-                You can change your votes anytime before voting closes
+              <p className="text-sm text-center text-muted-foreground pb-2">
+                You can change your votes before voting closes
               </p>
             )}
           </>
@@ -684,6 +717,7 @@ function RegisteredWaiting({ election }: { election: ElectionInfo }) {
             The organizer hasn&apos;t set a voting start time yet. Stay on this page — it will refresh automatically.
           </p>
         )}
+        <ElectionSchedule election={election} />
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
           Checking for updates...
@@ -694,19 +728,54 @@ function RegisteredWaiting({ election }: { election: ElectionInfo }) {
 }
 
 function PhaseInfo({ election }: { election: ElectionInfo }) {
-  const phaseMessages: Record<string, { label: string; color: string; message: string }> = {
-    draft: { label: "Draft", color: "bg-gray-100 text-gray-700", message: "This election hasn't been published yet." },
-    before_registration: { label: "Upcoming", color: "bg-blue-100 text-blue-700", message: `Registration opens ${election.registrationStart ? new Date(election.registrationStart).toLocaleString() : "soon"}.` },
-    registration: { label: "Registration Open", color: "bg-green-100 text-green-700", message: `Registration closes ${election.registrationEnd ? new Date(election.registrationEnd).toLocaleString() : "when the organizer decides"}.` },
-    between_phases: { label: "Registration Closed", color: "bg-yellow-100 text-yellow-700", message: `Voting opens ${election.votingStart ? new Date(election.votingStart).toLocaleString() : "soon"}.` },
-    voting: { label: "Voting Open", color: "bg-emerald-100 text-emerald-700", message: `Voting closes ${election.votingEnd ? new Date(election.votingEnd).toLocaleString() : "when the organizer decides"}.` },
-    closed: { label: "Closed", color: "bg-red-100 text-red-700", message: "This election has ended." },
+  const phaseConfig: Record<string, { label: string; color: string }> = {
+    draft: { label: "Draft", color: "bg-gray-100 text-gray-700" },
+    before_registration: { label: "Upcoming", color: "bg-blue-100 text-blue-700" },
+    registration: { label: "Registration Open", color: "bg-green-100 text-green-700" },
+    between_phases: { label: "Registration Closed", color: "bg-yellow-100 text-yellow-700" },
+    voting: { label: "Voting Open", color: "bg-emerald-100 text-emerald-700" },
+    closed: { label: "Closed", color: "bg-red-100 text-red-700" },
   };
-  const info = phaseMessages[election.phase] || phaseMessages.draft;
+  const info = phaseConfig[election.phase] || phaseConfig.draft;
+
   return (
-    <div className="text-center space-y-2">
-      <Badge className={info.color} variant="secondary">{info.label}</Badge>
-      <p className="text-sm text-muted-foreground">{info.message}</p>
+    <div className="space-y-3">
+      <div className="text-center">
+        <Badge className={info.color} variant="secondary">{info.label}</Badge>
+      </div>
+      <ElectionSchedule election={election} />
+    </div>
+  );
+}
+
+function ElectionSchedule({ election }: { election: ElectionInfo }) {
+  const now = new Date();
+  const items: { label: string; date: string | null; isPast: boolean }[] = [
+    { label: "Registration opens", date: election.registrationStart, isPast: !!election.registrationStart && new Date(election.registrationStart) < now },
+    { label: "Registration closes", date: election.registrationEnd, isPast: !!election.registrationEnd && new Date(election.registrationEnd) < now },
+    { label: "Voting opens", date: election.votingStart, isPast: !!election.votingStart && new Date(election.votingStart) < now },
+    { label: "Voting closes", date: election.votingEnd, isPast: !!election.votingEnd && new Date(election.votingEnd) < now },
+  ];
+
+  const hasAnyDate = items.some(i => i.date);
+  if (!hasAnyDate) return null;
+
+  return (
+    <div className="rounded-lg border bg-slate-50/50 p-3.5 space-y-2">
+      <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground mb-1">
+        <CalendarClock className="h-4 w-4" />
+        Schedule
+      </div>
+      {items.map((item, i) => item.date && (
+        <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 text-sm">
+          <span className={item.isPast ? "text-muted-foreground" : "text-foreground"}>
+            {item.label}
+          </span>
+          <span className={`font-medium ${item.isPast ? "text-muted-foreground line-through" : "text-foreground"}`}>
+            {new Date(item.date).toLocaleString()}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

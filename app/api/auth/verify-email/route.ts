@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { z } from "zod";
+import { timingSafeEqual } from "crypto";
 
 const verifySchema = z.object({
   email: z.string().email(),
-  code: z.string().length(6),
+  code: z.string().length(6).regex(/^\d{6}$/, "Code must be 6 digits"),
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, "verify");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const { email, code } = verifySchema.parse(body);
@@ -24,16 +35,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Already verified" });
     }
 
-    if (
-      !organizer.verificationCode ||
-      !organizer.verificationExpiry ||
-      organizer.verificationCode !== code
-    ) {
+    if (!organizer.verificationCode || !organizer.verificationExpiry) {
       return NextResponse.json({ error: "Invalid verification code" }, { status: 400 });
     }
 
     if (new Date() > organizer.verificationExpiry) {
       return NextResponse.json({ error: "Verification code has expired. Request a new one." }, { status: 400 });
+    }
+
+    const storedBuf = Buffer.from(organizer.verificationCode);
+    const inputBuf = Buffer.from(code);
+    if (storedBuf.length !== inputBuf.length || !timingSafeEqual(storedBuf, inputBuf)) {
+      return NextResponse.json({ error: "Invalid verification code" }, { status: 400 });
     }
 
     await prisma.organizer.update({

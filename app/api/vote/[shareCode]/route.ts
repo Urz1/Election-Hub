@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getElectionPhase } from "@/lib/election-helpers";
+import { cached } from "@/lib/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -10,18 +11,20 @@ export async function GET(
 ) {
   const { shareCode } = await params;
 
-  const election = await prisma.election.findUnique({
-    where: { shareCode },
-    include: {
-      positions: {
-        orderBy: { displayOrder: "asc" },
-        include: { candidates: { orderBy: { displayOrder: "asc" } } },
+  const election = await cached(`election:${shareCode}`, 3000, () =>
+    prisma.election.findUnique({
+      where: { shareCode },
+      include: {
+        positions: {
+          orderBy: { displayOrder: "asc" },
+          include: { candidates: { orderBy: { displayOrder: "asc" } } },
+        },
+        regions: { select: { id: true, name: true, geometry: true, bufferMeters: true } },
+        customFields: { orderBy: { displayOrder: "asc" } },
+        organizer: { select: { name: true } },
       },
-      regions: { select: { id: true, name: true, geometry: true, bufferMeters: true } },
-      customFields: { orderBy: { displayOrder: "asc" } },
-      organizer: { select: { name: true } },
-    },
-  });
+    })
+  );
 
   if (!election) {
     return NextResponse.json({ error: "Election not found" }, { status: 404 });

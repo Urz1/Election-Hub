@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationCode } from "@/lib/email";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { audit } from "@/lib/audit";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().email("Invalid email address").max(320),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128),
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = rateLimit(ip, "auth");
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Too many attempts. Try again in ${rl.retryAfterSeconds}s.` },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const body = await request.json();
     const data = registerSchema.parse(body);
@@ -44,6 +55,8 @@ export async function POST(request: Request) {
     if (!sent) {
       console.log(`[FALLBACK] Organizer verification code for ${data.email}: ${verificationCode}`);
     }
+
+    audit({ action: "organizer.register", actor: organizer.email, actorType: "organizer", targetId: organizer.id, ip });
 
     return NextResponse.json({
       id: organizer.id,
