@@ -742,8 +742,8 @@ function GeneralSettings({
           label="Auto-start phases on schedule"
           description={
             election.autoTransition
-              ? "Phases transition automatically based on scheduled dates"
-              : "You manually open registration, voting, and close the election"
+              ? "Registration and voting start automatically at the scheduled times. Phases close at their end times."
+              : "You manually open registration and voting from the dashboard. Phases still close automatically at their end times."
           }
           value={election.autoTransition}
           locked={isClosed}

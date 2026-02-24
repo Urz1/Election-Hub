@@ -493,6 +493,7 @@ export default function CreateElectionPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Registration Opens</Label>
+                  {!autoTransition && <p className="text-xs text-muted-foreground">Optional — you can start it manually</p>}
                   <Input
                     type="datetime-local"
                     value={registrationStart}
@@ -502,6 +503,7 @@ export default function CreateElectionPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Registration Closes</Label>
+                  <p className="text-xs text-muted-foreground">Registration closes automatically at this time</p>
                   <Input
                     type="datetime-local"
                     value={registrationEnd}
@@ -511,6 +513,7 @@ export default function CreateElectionPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Voting Opens</Label>
+                  {!autoTransition && <p className="text-xs text-muted-foreground">Optional — you can start it manually</p>}
                   <Input
                     type="datetime-local"
                     value={votingStart}
@@ -520,6 +523,7 @@ export default function CreateElectionPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Voting Closes</Label>
+                  <p className="text-xs text-muted-foreground">Voting closes automatically at this time</p>
                   <Input
                     type="datetime-local"
                     value={votingEnd}
@@ -543,8 +547,8 @@ export default function CreateElectionPage() {
                   <Label>Auto-start phases on schedule</Label>
                   <p className="text-xs text-muted-foreground">
                     {autoTransition
-                      ? "Registration and voting will start/stop automatically based on the dates above"
-                      : "You will manually open registration, voting, and close the election from the dashboard"}
+                      ? "Registration and voting start automatically at the scheduled times. Phases close at their end times."
+                      : "You manually open registration and voting from the dashboard. Phases still close automatically at their end times."}
                   </p>
                 </div>
                 <Switch checked={autoTransition} onCheckedChange={setAutoTransition} />

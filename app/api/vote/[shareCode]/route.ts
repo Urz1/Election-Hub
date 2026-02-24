@@ -32,14 +32,15 @@ export async function GET(
 
   const phase = getElectionPhase(election);
 
-  // For auto-transition elections, sync DB status when dates have advanced the phase
-  if (election.autoTransition) {
-    const dbStatus = election.status;
-    if (phase === "voting" && dbStatus === "registration") {
-      await prisma.election.update({ where: { id: election.id }, data: { status: "voting" } });
-    } else if (phase === "closed" && dbStatus !== "closed") {
-      await prisma.election.update({ where: { id: election.id }, data: { status: "closed" } });
-    }
+  // Sync DB status when the computed phase has advanced past the stored status.
+  // Auto-transition: sync both registration→voting and voting→closed.
+  // Manual: only auto-close when votingEnd passes (start is always manual).
+  const dbStatus = election.status;
+  if (election.autoTransition && phase === "voting" && dbStatus === "registration") {
+    await prisma.election.update({ where: { id: election.id }, data: { status: "voting" } });
+  }
+  if (phase === "closed" && dbStatus !== "closed") {
+    await prisma.election.update({ where: { id: election.id }, data: { status: "closed" } });
   }
 
   return NextResponse.json({
