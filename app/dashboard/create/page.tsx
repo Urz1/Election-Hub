@@ -205,8 +205,8 @@ export default function CreateElectionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white sticky top-0 z-50">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard")}>
             <ArrowLeft className="h-4 w-4 mr-1" />
@@ -229,8 +229,8 @@ export default function CreateElectionPage() {
                 i === step
                   ? "bg-primary text-primary-foreground"
                   : i < step
-                  ? "bg-green-100 text-green-700 hover:bg-green-200"
-                  : "bg-slate-100 text-slate-400"
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {i < step ? <Check className="h-3.5 w-3.5" /> : <span>{i + 1}</span>}
@@ -319,7 +319,7 @@ export default function CreateElectionPage() {
                     <div className="space-y-2">
                       {pos.candidates.map((cand, ci) => (
                         <div key={ci} className="flex items-center gap-2">
-                          <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
+                          <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground flex-shrink-0">
                             {ci + 1}
                           </div>
                           <ImageUpload
@@ -408,7 +408,7 @@ export default function CreateElectionPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-md border bg-slate-50 px-3 py-2 text-sm text-muted-foreground">
+              <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
                 Email (always required)
               </div>
               {customFields.map((f, i) => (
@@ -533,7 +533,7 @@ export default function CreateElectionPage() {
                 </div>
               </div>
               {timeErrors.length > 0 && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-3 space-y-1">
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 space-y-1">
                   {timeErrors.map((err, i) => (
                     <div key={i} className="flex items-start gap-2 text-sm text-red-700">
                       <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
@@ -608,11 +608,11 @@ export default function CreateElectionPage() {
                 <span className="text-sm font-medium text-muted-foreground">Positions & Candidates</span>
                 <div className="mt-2 space-y-2">
                   {positions.map((p, i) => (
-                    <div key={i} className="bg-slate-50 rounded-md px-3 py-2 text-sm">
+                    <div key={i} className="bg-muted rounded-md px-3 py-2 text-sm">
                       <span className="font-semibold">{p.title}</span>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {p.candidates.filter((c) => c.name.trim()).map((c, ci) => (
-                          <span key={ci} className="inline-flex items-center gap-1.5 bg-white border rounded-full px-2 py-0.5 text-xs">
+                          <span key={ci} className="inline-flex items-center gap-1.5 bg-card border rounded-full px-2 py-0.5 text-xs">
                             {c.photoUrl && (
                               <img src={c.photoUrl} alt={c.name} className="h-4 w-4 rounded-full object-cover" />
                             )}

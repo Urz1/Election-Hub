@@ -68,7 +68,7 @@ function ResetPasswordContent() {
 
   if (!token || !email) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/30 px-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-8 pb-8 space-y-4">
             <h2 className="text-xl font-semibold">Invalid reset link</h2>
@@ -85,7 +85,7 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/30 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
@@ -101,7 +101,7 @@ function ResetPasswordContent() {
         <CardContent>
           {done ? (
             <div className="space-y-4 text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Check className="h-6 w-6 text-green-600" />
               </div>
               <Button className="w-full" onClick={() => router.push("/login")}>

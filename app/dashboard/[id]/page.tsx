@@ -253,8 +253,8 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
   const shareLink = `${typeof window !== "undefined" ? window.location.origin : ""}/vote/${election.shareCode}`;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white sticky top-0 z-50">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm">
@@ -313,7 +313,7 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
           </Button>
         </div>
 
-        <div className="rounded-md border bg-white px-4 py-2 text-sm flex items-center gap-2">
+        <div className="rounded-md border bg-card px-4 py-2 text-sm flex items-center gap-2">
           <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <span className="text-muted-foreground">Voter link:</span>
           <code className="font-mono text-xs flex-1 truncate">{shareLink}</code>
@@ -333,7 +333,7 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
                 </Button>
               )}
               {phase === "closed" && (
-                <Badge variant="secondary" className="bg-red-100 text-red-700 text-xs">Locked</Badge>
+                <Badge variant="secondary" className="bg-destructive/10 text-destructive text-xs">Locked</Badge>
               )}
             </div>
           </CardHeader>
@@ -378,9 +378,9 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
                   </div>
                 </div>
                 {scheduleErrors.length > 0 && (
-                  <div className="rounded-md border border-red-200 bg-red-50 p-3 space-y-1">
+                  <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 space-y-1">
                     {scheduleErrors.map((err, i) => (
-                      <div key={i} className="flex items-start gap-2 text-sm text-red-700">
+                      <div key={i} className="flex items-start gap-2 text-sm text-destructive">
                         <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                         <span>{err}</span>
                       </div>
@@ -450,7 +450,7 @@ export default function ElectionDashboard({ params }: { params: Promise<{ id: st
                           {c.photoUrl ? (
                             <img src={c.photoUrl} alt={c.name} className="h-7 w-7 rounded-full object-cover flex-shrink-0" />
                           ) : (
-                            <div className="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-500 flex-shrink-0">
+                            <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground flex-shrink-0">
                               {c.name.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -942,7 +942,7 @@ function PositionCandidateEditor({
       </CardHeader>
       <CardContent className="space-y-4">
         {addingPosition && (
-          <div className="border rounded-lg p-4 bg-blue-50/50 space-y-3">
+          <div className="border rounded-lg p-4 bg-muted/50 space-y-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Position Title</Label>
               <Input value={newPosTitle} onChange={(e) => setNewPosTitle(e.target.value)} placeholder="e.g. President" />
@@ -968,7 +968,7 @@ function PositionCandidateEditor({
 
         {election.positions.map((pos) => (
           <div key={pos.id} className="border rounded-lg overflow-hidden">
-            <div className="bg-slate-50 px-4 py-3 flex items-center justify-between">
+            <div className="bg-muted px-4 py-3 flex items-center justify-between">
               {editingPosId === pos.id ? (
                 <div className="flex-1 space-y-2 mr-2">
                   <Input value={editPosTitle} onChange={(e) => setEditPosTitle(e.target.value)} className="h-8" />
@@ -1005,7 +1005,7 @@ function PositionCandidateEditor({
                           </Button>
                         </div>
                       ) : (
-                        <Button size="icon-sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => setConfirmDelete(`pos-${pos.id}`)}>
+                        <Button size="icon-sm" variant="ghost" className="text-destructive hover:text-destructive/80" onClick={() => setConfirmDelete(`pos-${pos.id}`)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       )
@@ -1048,7 +1048,7 @@ function PositionCandidateEditor({
                       {cand.photoUrl ? (
                         <img src={cand.photoUrl} alt={cand.name} className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-500 flex-shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground flex-shrink-0">
                           {cand.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -1078,7 +1078,7 @@ function PositionCandidateEditor({
                               </Button>
                             </div>
                           ) : (
-                            <Button size="icon-sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => setConfirmDelete(`cand-${cand.id}`)}>
+                            <Button size="icon-sm" variant="ghost" className="text-destructive hover:text-destructive/80" onClick={() => setConfirmDelete(`cand-${cand.id}`)}>
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           )
@@ -1094,7 +1094,7 @@ function PositionCandidateEditor({
               )}
 
               {addingCandidateFor === pos.id ? (
-                <div className="border rounded-lg p-3 bg-green-50/50 space-y-3">
+                <div className="border rounded-lg p-3 bg-muted/50 space-y-3">
                   <div className="flex items-start gap-2">
                     <div className="flex-shrink-0">
                       <ImageUpload
@@ -1274,7 +1274,7 @@ function RegionEditor({
                         </Button>
                       </div>
                     ) : (
-                      <Button size="icon-sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => setConfirmDelete(region.id)}>
+                      <Button size="icon-sm" variant="ghost" className="text-destructive hover:text-destructive/80" onClick={() => setConfirmDelete(region.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     )
@@ -1377,7 +1377,7 @@ function EditableTextField({
         <div
           onClick={locked ? undefined : startEdit}
           className={`rounded-md border px-3 py-2 text-sm ${
-            locked ? "bg-muted text-muted-foreground cursor-not-allowed" : "cursor-pointer hover:bg-slate-50 transition-colors"
+            locked ? "bg-muted text-muted-foreground cursor-not-allowed" : "cursor-pointer hover:bg-muted/50 transition-colors"
           } ${!value ? "text-muted-foreground italic" : ""}`}
         >
           {value || "Click to add..."}
@@ -1419,10 +1419,10 @@ function ToggleField({
         onClick={() => onSave(!value)}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
           locked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        } ${value ? "bg-emerald-500" : "bg-gray-300"}`}
+        } ${value ? "bg-primary" : "bg-muted-foreground/30"}`}
       >
         <span
-          className={`inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm ${
+          className={`inline-block h-4 w-4 rounded-full bg-background transition-transform shadow-sm ${
             value ? "translate-x-6" : "translate-x-1"
           }`}
         />
@@ -1505,8 +1505,8 @@ function ScheduleRow({ label, value, phase, activePhases }: {
         </span>
         {isActive && !isPast && (
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 dark:bg-emerald-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
         )}
       </div>

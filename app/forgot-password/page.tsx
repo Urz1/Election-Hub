@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/30 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
@@ -57,7 +57,7 @@ export default function ForgotPasswordPage() {
         <CardContent>
           {sent ? (
             <div className="space-y-4 text-center">
-              <div className="mx-auto w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Mail className="h-6 w-6 text-green-600" />
               </div>
               <p className="text-sm text-muted-foreground">

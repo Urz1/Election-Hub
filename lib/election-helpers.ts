@@ -72,12 +72,12 @@ export function getPhaseLabel(phase: ElectionPhase): string {
 
 export function getPhaseColor(phase: ElectionPhase): string {
   const colors: Record<ElectionPhase, string> = {
-    draft: "bg-gray-100 text-gray-700",
-    before_registration: "bg-blue-100 text-blue-700",
-    registration: "bg-green-100 text-green-700",
-    between_phases: "bg-yellow-100 text-yellow-700",
-    voting: "bg-emerald-100 text-emerald-700",
-    closed: "bg-red-100 text-red-700",
+    draft: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+    before_registration: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+    registration: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+    between_phases: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+    voting: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    closed: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
   };
   return colors[phase];
 }

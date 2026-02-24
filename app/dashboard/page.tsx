@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, Vote, Users, BarChart3, LogOut, ExternalLink } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -58,12 +59,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white sticky top-0 z-50">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Logo size="md" />
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">{session?.user?.name}</span>
+            <ThemeToggle />
             <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>
               <LogOut className="h-4 w-4 mr-1" />
               Logout

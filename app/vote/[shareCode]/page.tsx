@@ -360,8 +360,8 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
   if (!election) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <header className="border-b bg-white/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <header className="border-b bg-background/80 backdrop-blur-sm">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-2.5">
           <LogoIcon size={24} className="flex-shrink-0" />
           <span className="font-semibold text-sm truncate">{election.title}</span>
@@ -401,7 +401,7 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
                 </Button>
               )}
               {election.phase === "voting" && (
-                <p className="text-sm text-center text-muted-foreground bg-amber-50 rounded-md px-3 py-2">
+                <p className="text-sm text-center text-muted-foreground bg-muted rounded-md px-3 py-2">
                   Registration is closed. Only pre-registered voters can vote.
                 </p>
               )}
@@ -473,7 +473,7 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
               ))}
 
               {election.requireLocation && (
-                <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-md px-3 py-2">
+                <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-md px-3 py-2">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
                   <span>This election requires location verification.</span>
                 </div>
@@ -499,8 +499,8 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
             </CardHeader>
             <CardContent className="space-y-4">
               {devCode && (
-                <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-sm">
-                  <span className="font-medium text-amber-700">Dev mode:</span>{" "}
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2 text-sm">
+                  <span className="font-medium text-amber-700 dark:text-amber-400">Dev mode:</span>{" "}
                   <code className="font-mono">{devCode}</code>
                 </div>
               )}
@@ -531,7 +531,7 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
             </div>
 
             {election.votingEnd && (
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-slate-50 rounded-lg px-4 py-2.5">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted rounded-lg px-4 py-2.5">
                 <Clock className="h-4 w-4 flex-shrink-0" />
                 <span>Closes: <span className="font-medium text-foreground">{new Date(election.votingEnd).toLocaleString()}</span></span>
               </div>
@@ -555,13 +555,13 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
                       className={`w-full text-left rounded-xl border-2 p-4 transition-all active:scale-[0.98] ${
                         selectedVotes[pos.id] === c.id
                           ? "border-primary bg-primary/5 shadow-sm"
-                          : "border-transparent bg-slate-50 hover:bg-slate-100"
+                          : "border-transparent bg-muted hover:bg-muted/70"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`h-6 w-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                            selectedVotes[pos.id] === c.id ? "border-primary bg-primary" : "border-slate-300"
+                            selectedVotes[pos.id] === c.id ? "border-primary bg-primary" : "border-muted-foreground/30"
                           }`}
                         >
                           {selectedVotes[pos.id] === c.id && <Check className="h-3.5 w-3.5 text-white" />}
@@ -569,7 +569,7 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
                         {c.photoUrl ? (
                           <img src={c.photoUrl} alt={c.name} className="h-11 w-11 rounded-full object-cover flex-shrink-0" />
                         ) : (
-                          <div className="h-11 w-11 rounded-full bg-slate-200 flex items-center justify-center text-sm font-semibold text-slate-500 flex-shrink-0">
+                          <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center text-sm font-semibold text-muted-foreground flex-shrink-0">
                             {c.name.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -646,7 +646,7 @@ export default function VoterPage({ params }: { params: Promise<{ shareCode: str
                           {c.photoUrl ? (
                             <img src={c.photoUrl} alt={c.name} className="h-6 w-6 rounded-full object-cover flex-shrink-0" />
                           ) : (
-                            <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium text-slate-500 flex-shrink-0">
+                            <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground flex-shrink-0">
                               {c.name.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -723,13 +723,13 @@ function RegisteredWaiting({ election }: { election: ElectionInfo }) {
           Your registration is confirmed. This page will automatically take you to the ballot when voting opens.
         </p>
         {election.votingStart && (
-          <div className="bg-blue-50 rounded-lg p-4 space-y-1">
-            <div className="flex items-center justify-center gap-2 text-blue-700 font-medium">
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-1">
+            <div className="flex items-center justify-center gap-2 text-primary font-medium">
               <Clock className="h-4 w-4" />
               Voting starts in
             </div>
-            <p className="text-2xl font-bold text-blue-800">{countdown || "Calculating..."}</p>
-            <p className="text-xs text-blue-600">
+            <p className="text-2xl font-bold text-foreground">{countdown || "Calculating..."}</p>
+            <p className="text-xs text-muted-foreground">
               {new Date(election.votingStart).toLocaleString()}
             </p>
           </div>
@@ -751,12 +751,12 @@ function RegisteredWaiting({ election }: { election: ElectionInfo }) {
 
 function PhaseInfo({ election }: { election: ElectionInfo }) {
   const phaseConfig: Record<string, { label: string; color: string }> = {
-    draft: { label: "Draft", color: "bg-gray-100 text-gray-700" },
-    before_registration: { label: "Upcoming", color: "bg-blue-100 text-blue-700" },
-    registration: { label: "Registration Open", color: "bg-green-100 text-green-700" },
-    between_phases: { label: "Registration Closed", color: "bg-yellow-100 text-yellow-700" },
-    voting: { label: "Voting Open", color: "bg-emerald-100 text-emerald-700" },
-    closed: { label: "Closed", color: "bg-red-100 text-red-700" },
+    draft: { label: "Draft", color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
+    before_registration: { label: "Upcoming", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+    registration: { label: "Registration Open", color: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300" },
+    between_phases: { label: "Registration Closed", color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300" },
+    voting: { label: "Voting Open", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+    closed: { label: "Closed", color: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" },
   };
   const info = phaseConfig[election.phase] || phaseConfig.draft;
 
@@ -783,7 +783,7 @@ function ElectionSchedule({ election }: { election: ElectionInfo }) {
   if (!hasAnyDate) return null;
 
   return (
-    <div className="rounded-lg border bg-slate-50/50 p-3.5 space-y-2">
+    <div className="rounded-lg border bg-muted/50 p-3.5 space-y-2">
       <div className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground mb-1">
         <CalendarClock className="h-4 w-4" />
         Schedule

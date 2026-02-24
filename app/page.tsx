@@ -2,14 +2,16 @@ import Link from "next/link";
 import { Shield, MapPin, BarChart3, Users, Clock, Vote, Github, Linkedin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo, LogoIcon } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <Logo size="md" />
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link href="/login">
               <Button variant="ghost" size="sm">Log in</Button>
             </Link>
@@ -22,7 +24,7 @@ export default function LandingPage() {
 
       <main>
         <section className="max-w-6xl mx-auto px-4 py-16 sm:py-24 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             Elections made
             <span className="text-primary"> simple</span>
           </h1>
@@ -80,13 +82,13 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t bg-slate-900 text-slate-400">
+      <footer className="border-t bg-card text-muted-foreground">
         <div className="max-w-6xl mx-auto px-4 py-10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex flex-col items-center sm:items-start gap-2">
               <div className="flex items-center gap-2">
                 <LogoIcon size={24} />
-                <span className="font-bold text-lg text-white">
+                <span className="font-bold text-lg text-foreground">
                   Elect<span className="text-emerald-500">Hub</span>
                 </span>
               </div>
@@ -100,26 +102,26 @@ export default function LandingPage() {
                   href="https://sadam.tech"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-emerald-400 font-medium hover:text-emerald-300 transition-colors"
+                  className="text-emerald-500 font-medium hover:text-emerald-400 transition-colors"
                 >
                   Sadam Husen Ali
                 </a>
               </p>
               <div className="flex items-center gap-3">
-                <a href="https://github.com/Urz1" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="GitHub">
+                <a href="https://github.com/Urz1" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" aria-label="GitHub">
                   <Github className="h-5 w-5" />
                 </a>
-                <a href="https://linkedin.com/in/sadam-husen-16s" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn">
+                <a href="https://linkedin.com/in/sadam-husen-16s" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" aria-label="LinkedIn">
                   <Linkedin className="h-5 w-5" />
                 </a>
-                <a href="https://sadam.tech" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Portfolio">
+                <a href="https://sadam.tech" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors" aria-label="Portfolio">
                   <Globe className="h-5 w-5" />
                 </a>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-slate-800 text-center text-xs text-slate-500">
+          <div className="mt-6 pt-6 border-t text-center text-xs text-muted-foreground/60">
             <p>&copy; {new Date().getFullYear()} ElectHub. All rights reserved.</p>
           </div>
         </div>
@@ -138,7 +140,7 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="rounded-xl border bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="rounded-xl border bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
       <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-4">
         {icon}
       </div>

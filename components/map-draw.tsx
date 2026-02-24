@@ -585,12 +585,12 @@ export default function MapDraw({ regions, onRegionsChange }: MapDrawProps) {
           </div>
         </div>
         {searchOpen && searchResults.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-50 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-48 overflow-y-auto">
             {searchResults.map((r, i) => (
               <button
                 key={i}
                 type="button"
-                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 flex items-start gap-2"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-muted flex items-start gap-2"
                 onMouseDown={() => handleSearchSelect(r)}
               >
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -734,7 +734,7 @@ export default function MapDraw({ regions, onRegionsChange }: MapDrawProps) {
         <button
           type="button"
           onClick={goToMyLocation}
-          className="absolute bottom-3 left-3 z-[1000] h-9 w-9 rounded-md bg-white border shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+          className="absolute bottom-3 left-3 z-[1000] h-9 w-9 rounded-md bg-card border shadow-md flex items-center justify-center hover:bg-muted transition-colors"
           title="Go to my location"
         >
           <LocateFixed className="h-4 w-4 text-slate-700" />
@@ -767,7 +767,7 @@ export default function MapDraw({ regions, onRegionsChange }: MapDrawProps) {
                 <div
                   key={i}
                   className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
-                    editIndex === i ? "border-orange-300 bg-orange-50" : "bg-white hover:bg-slate-50"
+                    editIndex === i ? "border-orange-300 bg-orange-50 dark:bg-orange-950/30" : "bg-card hover:bg-muted"
                   }`}
                 >
                   <div className="shrink-0">

@@ -96,11 +96,11 @@ function VerifyEmailContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/30 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
-            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Mail className="h-6 w-6 text-blue-600" />
             </div>
           </div>
